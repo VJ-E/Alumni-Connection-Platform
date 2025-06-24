@@ -22,7 +22,7 @@ interface ConnectionRequest {
     profilePhoto: string;
     description: string;
     graduationYear: number | null;
-  } | null;
+  };
   status: string;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -43,7 +43,19 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
           getConnectionRequests()
         ]);
         setUsers(connectedUsers);
-        setConnectionRequests(requests);
+        // Convert the mongoose documents to our ConnectionRequest type
+        const validRequests: ConnectionRequest[] = requests
+          .filter((req): req is NonNullable<typeof req> => req !== null)
+          .map(req => ({
+            _id: req._id.toString(),
+            senderId: req.senderId,
+            receiverId: req.receiverId,
+            sender: req.sender,
+            status: req.status,
+            createdAt: req.createdAt,
+            updatedAt: req.updatedAt
+          }));
+        setConnectionRequests(validRequests);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load messages");
