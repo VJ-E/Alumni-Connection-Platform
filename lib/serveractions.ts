@@ -252,34 +252,62 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
 // creating post using server actions
 export const createPostAction = async (inputText: string, selectedFile: string) => {
     try {
-        await connectDB();
+        // Verify database connection
+        const connection = await connectDB();
+        if (!connection) {
+            throw new Error('Failed to connect to database');
+        }
+
+        // Verify user authentication
         const user = await currentUser();
-        if (!user) throw new Error('User not authenticated');
-        if (!inputText) throw new Error('Input field is required');
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+        if (!inputText) {
+            throw new Error('Input field is required');
+        }
 
         // Get user data from database
         const userProfile = await User.findOne({ userId: user.id }).lean();
-        if (!userProfile) throw new Error('User profile not found');
+        if (!userProfile) {
+            throw new Error('User profile not found');
+        }
 
         // Create user object with data from both Clerk and our database
         const userObject = {
             userId: user.id,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.emailAddresses?.[0]?.emailAddress || "",
-            profilePhoto: user.imageUrl || "/default-avatar.png",
+            firstName: user.firstName || userProfile.firstName || "",
+            lastName: user.lastName || userProfile.lastName || "",
+            email: user.emailAddresses?.[0]?.emailAddress || userProfile.email || "",
+            profilePhoto: user.imageUrl || userProfile.profilePhoto || "/default-avatar.png",
             description: userProfile.description || "",
             graduationYear: userProfile.graduationYear
         };
         
         let post;
-        if (selectedFile) {
-            const uploadResponse = await cloudinary.uploader.upload(selectedFile);
-            post = await Post.create({
-                description: inputText,
-                user: userObject,
-                imageUrl: uploadResponse.secure_url
-            });
+        if (selectedFile && selectedFile.startsWith('data:image')) {
+            // Verify Cloudinary configuration
+            if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
+                !process.env.CLOUDINARY_API_KEY || 
+                !process.env.CLOUDINARY_API_SECRET) {
+                throw new Error('Cloudinary configuration is missing');
+            }
+
+            try {
+                const uploadResponse = await cloudinary.uploader.upload(selectedFile, {
+                    folder: 'alumni-posts',
+                    resource_type: 'auto',
+                    timeout: 60000
+                });
+                post = await Post.create({
+                    description: inputText,
+                    user: userObject,
+                    imageUrl: uploadResponse.secure_url
+                });
+            } catch (uploadError) {
+                console.error('Cloudinary upload error:', uploadError);
+                throw new Error('Failed to upload image. Please try again.');
+            }
         } else {
             post = await Post.create({
                 description: inputText,
@@ -287,11 +315,18 @@ export const createPostAction = async (inputText: string, selectedFile: string) 
             });
         }
         
+        if (!post) {
+            throw new Error('Failed to create post');
+        }
+
         revalidatePath("/");
-        return { success: true };
+        return { success: true, post };
     } catch (error: any) {
         console.error('Error in createPostAction:', error);
-        throw new Error(error.message || 'Failed to create post');
+        if (error instanceof Error) {
+            console.error('Error details:', error.message, error.stack);
+        }
+        throw new Error(error.message || 'Failed to create post. Please try again.');
     }
 }
 
