@@ -122,9 +122,9 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
 
     switch (selectedTab) {
       case 'student':
-        return graduationYear !== null && graduationYear >= currentYear;
+        return graduationYear !== null && graduationYear > currentYear;
       case 'alumni':
-        return graduationYear !== null && graduationYear < currentYear;
+        return graduationYear !== null && graduationYear <= currentYear;
       default:
         return true;
     }
@@ -157,13 +157,13 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
             variant={selectedTab === 'student' ? 'default' : 'ghost'}
             onClick={() => setSelectedTab('student')}
           >
-            Student Users ({users.filter(u => u.graduationYear && u.graduationYear >= currentYear).length})
+            Student Users ({users.filter(u => u.graduationYear && u.graduationYear > currentYear).length})
           </Button>
           <Button
             variant={selectedTab === 'alumni' ? 'default' : 'ghost'}
             onClick={() => setSelectedTab('alumni')}
           >
-            Alumni Users ({users.filter(u => u.graduationYear && u.graduationYear < currentYear).length})
+            Alumni Users ({users.filter(u => u.graduationYear && u.graduationYear <= currentYear).length})
           </Button>
         </div>
       </div>
@@ -171,7 +171,7 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {filteredUsers.map((user) => {
           const graduationYear = user.graduationYear ? Number(user.graduationYear) : null;
-          const isAlumni = graduationYear !== null && graduationYear < currentYear;
+          const isAlumni = graduationYear !== null && graduationYear <= currentYear;
           
           return (
             <div
