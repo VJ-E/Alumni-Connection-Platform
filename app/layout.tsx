@@ -21,7 +21,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: undefined,
+        variables: { colorPrimary: '#0066FF' }
+      }}
+    >
       <html lang="en">
         <body className={`${inter.className} min-h-screen flex flex-col`}>
           <NavbarWrapper />
