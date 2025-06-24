@@ -14,13 +14,11 @@ export default async function ChatPage({ params }: { params: { userId: string } 
     redirect("/messages");
   }
 
-  // Extract only the necessary user data
-  const currentUserData = {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    imageUrl: user.imageUrl
-  };
+  // Get current user data in the same format as otherUser
+  const currentUserData = await getUserById(user.id);
+  if (!currentUserData) {
+    redirect("/sign-in");
+  }
 
   return (
     <div className="pt-20">

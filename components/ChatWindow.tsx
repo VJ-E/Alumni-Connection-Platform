@@ -102,12 +102,12 @@ export default function ChatWindow({
             <div
               key={message._id}
               className={`flex ${
-                message.senderId === currentUser.id ? "justify-end" : "justify-start"
+                message.senderId === currentUser.userId ? "justify-end" : "justify-start"
               }`}
             >
               <div
                 className={`max-w-[70%] rounded-lg p-3 ${
-                  message.senderId === currentUser.id
+                  message.senderId === currentUser.userId
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100"
                 }`}
