@@ -2,12 +2,18 @@ import Feed from "@/components/Feed";
 import News from "@/components/News";
 import Sidebar from "@/components/Sidebar";
 import { currentUser } from "@clerk/nextjs/server";
+// import { redirect } from "next/dist/server/api-utils";
+import { redirect } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default async function Home() {
   const user = await currentUser();
   
+  if(!user){
+    redirect("/sign-in");
+  }
+
   // Create a plain object with only the needed user data
   const userData = user ? {
     id: user.id,
@@ -21,12 +27,7 @@ export default async function Home() {
   return (
     <div className="pt-20">
       <div className="max-w-6xl mx-auto flex justify-between gap-8">
-        {/* Sidebar  */}
-        {/* <Sidebar user={userData}/> */}
-        {/* Feed  */}
         <Feed user={userData}/>
-        {/* News 
-        <News/> */}
       </div>
       <ToastContainer />
     </div>
