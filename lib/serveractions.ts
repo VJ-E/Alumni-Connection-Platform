@@ -42,6 +42,7 @@ interface SafeUser {
     profilePhoto: string;
     description: string;
     graduationYear: number | null;
+    role: string;
 }
 
 interface SafeComment {
@@ -82,7 +83,8 @@ const serializeDocument = (doc: any): SafePost | null => {
             email: plainDoc.user.email || "",
             profilePhoto: plainDoc.user.profilePhoto || "/default-avatar.png",
             description: plainDoc.user.description || "",
-            graduationYear: plainDoc.user.graduationYear || null
+            graduationYear: plainDoc.user.graduationYear || null,
+            role: plainDoc.user.role || "student"
         };
     }
     
@@ -98,7 +100,8 @@ const serializeDocument = (doc: any): SafePost | null => {
                 email: comment.user.email || "",
                 profilePhoto: comment.user.profilePhoto || "/default-avatar.png",
                 description: comment.user.description || "",
-                graduationYear: comment.user.graduationYear || null
+                graduationYear: comment.user.graduationYear || null,
+                role: comment.user.role || "student"
             } : null,
             createdAt: comment.createdAt?.toString() || new Date().toISOString(),
             updatedAt: comment.updatedAt?.toString() || new Date().toISOString()
@@ -185,6 +188,10 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
     const userProfile = await User.findOne({ userId: user.id }).lean();
     if (!userProfile) return null;
     
+    // Determine role based on graduation year
+    const currentYear = new Date().getFullYear();
+    const role = userProfile.graduationYear && userProfile.graduationYear <= currentYear ? 'alumni' : 'student';
+    
     return {
         userId: userProfile.userId,
         firstName: userProfile.firstName || "",
@@ -192,7 +199,8 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
         email: userProfile.email || "",
         profilePhoto: userProfile.profilePhoto || "/default-avatar.png",
         description: userProfile.description || "",
-        graduationYear: userProfile.graduationYear || null
+        graduationYear: userProfile.graduationYear || null,
+        role: userProfile.role || role // Use stored role or calculate it
     };
 };
 
@@ -326,7 +334,8 @@ export const getConnectedUsers = async () => {
             email: user.email || "",
             profilePhoto: user.profilePhoto || "/default-avatar.png",
             description: user.description || "",
-            graduationYear: user.graduationYear || null
+            graduationYear: user.graduationYear || null,
+            role: user.role || "student"
         }));
 
         return JSON.parse(JSON.stringify(transformedUsers));
@@ -350,7 +359,8 @@ export const getUserById = async (userId: string) => {
             email: user.email || "",
             profilePhoto: user.profilePhoto || "/default-avatar.png",
             description: user.description || "",
-            graduationYear: user.graduationYear || null
+            graduationYear: user.graduationYear || null,
+            role: user.role || "student"
         };
     } catch (error) {
         console.error('Error fetching user:', error);
@@ -559,6 +569,7 @@ export const getUserProfile = async () => {
         // If profile doesn't exist, create it with Clerk data
         if (!profile) {
             console.log('Creating new profile for user:', user.id);
+            const currentYear = new Date().getFullYear();
             const userData = {
                 userId: user.id,
                 firstName: user.firstName || '',
@@ -566,7 +577,8 @@ export const getUserProfile = async () => {
                 email: user.emailAddresses[0]?.emailAddress || '',
                 profilePhoto: user.imageUrl || '/default-avatar.png',
                 description: '',
-                graduationYear: new Date().getFullYear() // Default to current year
+                graduationYear: currentYear, // Default to current year
+                role: 'student' // Default role
             };
             console.log('New user data:', userData);
             
