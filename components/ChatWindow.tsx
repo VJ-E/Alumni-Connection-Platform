@@ -6,7 +6,7 @@ import { IUser } from "@/models/user.model";
 import ProfilePhoto from "./shared/ProfilePhoto";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { getConnectionStatus, getMessages, sendMessage, uploadChatImage } from "@/lib/serveractions";
+import { getConnectionStatus, getMessages, sendMessage } from "@/lib/serveractions";
 import { toast } from "react-toastify";
 import { Images } from "lucide-react";
 import Image from "next/image";
@@ -241,4 +241,30 @@ export default function ChatWindow({
       </form>
     </div>
   );
+}
+// Uploads a base64 image to Cloudinary and returns the image URL
+async function uploadChatImage(base64Image: string): Promise<string> {
+  // Replace with your Cloudinary upload preset and cloud name
+  const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "your_upload_preset";
+  const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "your_cloud_name";
+  const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+  const formData = new FormData();
+  formData.append("file", base64Image);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  const response = await fetch(CLOUDINARY_URL, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Image upload failed");
+  }
+
+  const data = await response.json();
+  if (!data.secure_url) {
+    throw new Error("No image URL returned from upload");
+  }
+  return data.secure_url as string;
 }
