@@ -21,10 +21,23 @@ const opportunitySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  link: {
+    type: String,
+    required: false,
+  },
   createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    userId: {
+      type: String,
+      required: true,
+    }
   },
   createdAt: {
     type: Date,
