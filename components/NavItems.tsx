@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, MessageSquare, LogOut } from "lucide-react";
+import { Home, Users, MessageSquare, LogOut, Briefcase } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 
@@ -35,6 +35,17 @@ export default function NavItems() {
         }`}
       >
         <Users className="h-6 w-6" />
+      </Link>
+
+      <Link
+        href="/opportunities"
+        className={`p-3 rounded-lg transition-colors ${
+          isActive("/opportunities")
+            ? "bg-blue-100 text-blue-600"
+            : "hover:bg-gray-100 text-gray-600"
+        }`}
+      >
+        <Briefcase className="h-6 w-6" />
       </Link>
 
       <Link

@@ -10,11 +10,30 @@ import { SearchIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { toast } from "react-toastify";
 
+interface ConnectionRequest {
+  _id: string;
+  senderId: string;
+  receiverId: string;
+  sender: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePhoto: string;
+    description: string;
+    graduationYear: number | null;
+  } | null;
+  status: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 export default function MessagesList({ currentUser }: { currentUser: any }) {
   const [users, setUsers] = useState<IUser[]>([]);
-  const [connectionRequests, setConnectionRequests] = useState<any[]>([]);
+  const [connectionRequests, setConnectionRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [processingRequests, setProcessingRequests] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -41,9 +60,12 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
 
   const handleConnectionResponse = async (connectionId: string, status: 'accepted' | 'rejected') => {
     try {
+      setProcessingRequests(prev => ({ ...prev, [connectionId]: true }));
       await respondToConnectionRequest(connectionId, status);
+      
       // Remove the request from the list
       setConnectionRequests(prev => prev.filter(req => req._id !== connectionId));
+      
       if (status === 'accepted') {
         // Refresh connected users list
         const connectedUsers = await getConnectedUsers();
@@ -53,7 +75,10 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
         toast.info("Connection request declined");
       }
     } catch (error) {
+      console.error('Error handling connection response:', error);
       toast.error("Failed to respond to connection request");
+    } finally {
+      setProcessingRequests(prev => ({ ...prev, [connectionId]: false }));
     }
   };
 
@@ -85,41 +110,46 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
         <div className="p-4 bg-gray-50">
           <h2 className="font-semibold mb-4">Connection Requests</h2>
           <div className="space-y-4">
-            {connectionRequests.map((request) => (
-              <div
-                key={request._id}
-                className="bg-white p-4 rounded-lg border flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-4">
-                  <ProfilePhoto
-                    src={request.sender?.profilePhoto || "/default-avatar.png"}
-                  />
-                  <div>
-                    <h3 className="font-medium">
-                      {request.sender?.firstName} {request.sender?.lastName}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Wants to connect with you
-                    </p>
+            {connectionRequests.map((request) => {
+              const isProcessing = processingRequests[request._id];
+              return (
+                <div
+                  key={request._id}
+                  className="bg-white p-4 rounded-lg border flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-4">
+                    <ProfilePhoto
+                      src={request.sender?.profilePhoto || "/default-avatar.png"}
+                    />
+                    <div>
+                      <h3 className="font-medium">
+                        {request.sender?.firstName} {request.sender?.lastName}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Wants to connect with you
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isProcessing}
+                      onClick={() => handleConnectionResponse(request._id, 'rejected')}
+                    >
+                      {isProcessing ? 'Processing...' : 'Decline'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={isProcessing}
+                      onClick={() => handleConnectionResponse(request._id, 'accepted')}
+                    >
+                      {isProcessing ? 'Processing...' : 'Accept'}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleConnectionResponse(request._id, 'rejected')}
-                  >
-                    Decline
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleConnectionResponse(request._id, 'accepted')}
-                  >
-                    Accept
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
