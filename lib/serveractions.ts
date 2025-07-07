@@ -3,12 +3,16 @@
 import { Post } from "@/models/post.model";
 import { IUser, User } from "@/models/user.model";
 import { Message } from "@/models/message.model";
-import { Connection } from "@/models/connection.model";
+import { Connection, IConnection } from "@/models/connection.model";
 import { currentUser } from "@clerk/nextjs/server"
 import { v2 as cloudinary } from 'cloudinary';
 import connectDB from "./db";
 import { revalidatePath } from "next/cache";
 import { Comment } from "@/models/comment.model";
+import mongoose, { Model } from "mongoose";
+
+// Type assertion for Connection model
+const ConnectionModel: Model<IConnection> = Connection;
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -61,6 +65,15 @@ interface SafePost {
     comments?: SafeComment[];
     createdAt: string;
     updatedAt: string;
+}
+
+interface IConnectionRequest {
+    _id: mongoose.Types.ObjectId;
+    senderId: string;
+    receiverId: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 // Helper function to safely serialize any MongoDB document
@@ -151,7 +164,8 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
                         email: post.user.email,
                         profilePhoto: post.user.profilePhoto,
                         description: post.user.description || "",
-                        graduationYear: userProfile.graduationYear
+                        graduationYear: userProfile.graduationYear,
+                        role: userProfile.role || "student"
                     };
                 }
                 return post;
@@ -183,14 +197,37 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
     await connectDB();
     const userProfile = await User.findOne({ userId: user.id }).lean();
     
+    // If no profile exists, create one
+    if (!userProfile) {
+        const newUser = await User.create({
+            userId: user.id,
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.emailAddresses?.[0]?.emailAddress || "",
+            profilePhoto: user.imageUrl || "/default-avatar.png",
+            description: "",
+            graduationYear: null
+        });
+        return {
+            userId: newUser.userId,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            email: newUser.email,
+            profilePhoto: newUser.profilePhoto,
+            description: newUser.description,
+            graduationYear: newUser.graduationYear,
+        };
+    }
+    
+    // Return existing user profile data
     return {
-        userId: user.id,
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.emailAddresses?.[0]?.emailAddress || "",
-        profilePhoto: user.imageUrl || "/default-avatar.png",
-        description: userProfile?.description || "",
-        graduationYear: userProfile?.graduationYear || null,
+        userId: userProfile.userId,
+        firstName: userProfile.firstName,
+        lastName: userProfile.lastName,
+        email: userProfile.email,
+        profilePhoto: userProfile.profilePhoto || "/default-avatar.png",
+        description: userProfile.description || "",
+        graduationYear: userProfile.graduationYear,
     };
 };
 
@@ -304,30 +341,33 @@ export const getAllUsers = async () => {
     }
 }
 
-// Get connected users (for now, return all users except current user)
+// Get connected users (users with accepted connections)
 export const getConnectedUsers = async () => {
     try {
         await connectDB();
         const user = await currentUser();
         if (!user) return [];
 
+        // Find all accepted connections for the current user
         const connections = await Connection.find({
             $or: [
                 { senderId: user.id },
                 { receiverId: user.id }
             ],
             status: 'accepted'
-        });
+        }).lean();
 
+        // Get the IDs of connected users
         const connectedUserIds = connections.map(conn => 
             conn.senderId === user.id ? conn.receiverId : conn.senderId
         );
 
-        const users = await Post.find({
-            'user.userId': { $in: connectedUserIds }
-        }).distinct('user');
+        // Fetch user details for all connected users
+        const connectedUsers = await User.find({
+            userId: { $in: connectedUserIds }
+        }).lean();
 
-        return JSON.parse(JSON.stringify(users));
+        return JSON.parse(JSON.stringify(connectedUsers));
     } catch (error) {
         console.error('Error fetching connected users:', error);
         return [];
@@ -338,33 +378,30 @@ export const getConnectedUsers = async () => {
 export const getUserById = async (userId: string) => {
     try {
         await connectDB();
-        const post = await Post.findOne({ 'user.userId': userId });
-        return post?.user || null;
+        const user = await User.findOne({ userId: userId }).lean();
+        if (!user) return null;
+        
+        return {
+            userId: user.userId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            profilePhoto: user.profilePhoto || "/default-avatar.png",
+            description: user.description || "",
+            graduationYear: user.graduationYear
+        };
     } catch (error) {
         console.error('Error fetching user:', error);
         return null;
     }
 }
 
-// Get messages between users
+// Get messages between current user and another user
 export const getMessages = async (otherUserId: string) => {
     try {
         await connectDB();
         const user = await currentUser();
         if (!user) throw new Error('Not authenticated');
-
-        // Check if users are connected
-        const connection = await Connection.findOne({
-            $or: [
-                { senderId: user.id, receiverId: otherUserId },
-                { senderId: otherUserId, receiverId: user.id }
-            ],
-            status: 'accepted'
-        });
-
-        if (!connection) {
-            throw new Error('Users are not connected');
-        }
 
         const messages = await Message.find({
             $or: [
@@ -388,7 +425,7 @@ export const sendMessage = async (receiverId: string, content: string) => {
         if (!sender) throw new Error('Not authenticated');
 
         // Check if users are connected
-        const connection = await Connection.findOne({
+        const connection = await ConnectionModel.findOne({
             $or: [
                 { senderId: sender.id, receiverId },
                 { senderId: receiverId, receiverId: sender.id }
@@ -420,6 +457,12 @@ export const sendConnectionRequest = async (receiverId: string) => {
         await connectDB();
         const sender = await currentUser();
         if (!sender) throw new Error('Not authenticated');
+        if (!sender.id) throw new Error('Invalid sender ID');
+        if (!receiverId) throw new Error('Invalid receiver ID');
+
+        // Validate that receiver exists
+        const receiver = await User.findOne({ userId: receiverId });
+        if (!receiver) throw new Error('Receiver not found');
 
         // Check if connection already exists
         const existingConnection = await Connection.findOne({
@@ -430,20 +473,40 @@ export const sendConnectionRequest = async (receiverId: string) => {
         });
 
         if (existingConnection) {
-            throw new Error('Connection already exists');
+            if (existingConnection.status === 'pending') {
+                throw new Error('Connection request already sent');
+            } else if (existingConnection.status === 'accepted') {
+                throw new Error('Already connected');
+            }
+            // If rejected, delete the old connection
+            await existingConnection.deleteOne();
         }
 
-        await Connection.create({
+        // Create new connection with validated data
+        const connection = new Connection({
             senderId: sender.id,
             receiverId,
             status: 'pending'
         });
 
+        // Validate before saving
+        await connection.validate();
+        
+        // Save the connection
+        await connection.save();
+
+        // Revalidate all relevant pages
+        revalidatePath('/');
         revalidatePath('/people');
         revalidatePath('/messages');
-        return { success: true };
+        revalidatePath(`/messages/${receiverId}`);
+        
+        return { success: true, connectionId: connection._id.toString() };
     } catch (error: any) {
         console.error('Error sending connection request:', error);
+        if (error.code === 11000) {
+            throw new Error('Connection request already exists');
+        }
         throw new Error(error.message || 'Failed to send connection request');
     }
 }
@@ -453,25 +516,39 @@ export const getConnectionRequests = async () => {
     try {
         await connectDB();
         const user = await currentUser();
-        if (!user) return [];
+        if (!user || !user.id) return [];
 
-        const requests = await Connection.find({
+        const requests: IConnection[] = await ConnectionModel.find({
             receiverId: user.id,
             status: 'pending'
-        }).sort({ createdAt: -1 });
+        }).sort({ createdAt: -1 }).lean();
 
-        // Get sender details for each request
+        // Get sender details for each request from User model
         const requestsWithUsers = await Promise.all(
-            requests.map(async (request) => {
-                const senderPost = await Post.findOne({ 'user.userId': request.senderId });
+            requests.map(async (request: IConnection) => {
+                const sender = await User.findOne({ userId: request.senderId }).lean();
+                if (!sender) {
+                    // If sender not found, skip this request
+                    return null;
+                }
                 return {
-                    ...JSON.parse(JSON.stringify(request)),
-                    sender: senderPost?.user
+                    ...request,
+                    _id: request._id.toString(), // Convert ObjectId to string
+                    sender: {
+                        userId: sender.userId,
+                        firstName: sender.firstName,
+                        lastName: sender.lastName,
+                        email: sender.email,
+                        profilePhoto: sender.profilePhoto || "/default-avatar.png",
+                        description: sender.description || "",
+                        graduationYear: sender.graduationYear
+                    }
                 };
             })
         );
 
-        return requestsWithUsers;
+        // Filter out null values (requests with missing senders)
+        return requestsWithUsers.filter(Boolean);
     } catch (error) {
         console.error('Error fetching connection requests:', error);
         return [];
@@ -483,17 +560,26 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
     try {
         await connectDB();
         const user = await currentUser();
-        if (!user) throw new Error('Not authenticated');
+        if (!user || !user.id) throw new Error('Not authenticated');
 
-        const connection = await Connection.findById(connectionId);
+        const connection = await ConnectionModel.findById(connectionId);
         if (!connection) throw new Error('Connection request not found');
         if (connection.receiverId !== user.id) throw new Error('Not authorized');
 
-        connection.status = status;
-        await connection.save();
+        if (status === 'rejected') {
+            // If rejected, delete the connection
+            await connection.deleteOne();
+        } else {
+            // If accepted, update the status
+            connection.status = status;
+            await connection.save();
+        }
 
+        // Revalidate all relevant pages
+        revalidatePath('/');
         revalidatePath('/people');
         revalidatePath('/messages');
+        revalidatePath(`/messages/${connection.senderId}`);
         return { success: true };
     } catch (error: any) {
         console.error('Error responding to connection request:', error);
@@ -501,14 +587,14 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
     }
 }
 
-// Check connection status between users
+// Get connection status between current user and another user
 export const getConnectionStatus = async (otherUserId: string) => {
     try {
         await connectDB();
         const user = await currentUser();
         if (!user) return null;
 
-        const connection = await Connection.findOne({
+        const connection = await ConnectionModel.findOne({
             $or: [
                 { senderId: user.id, receiverId: otherUserId },
                 { senderId: otherUserId, receiverId: user.id }
@@ -517,7 +603,7 @@ export const getConnectionStatus = async (otherUserId: string) => {
 
         return connection ? connection.status : null;
     } catch (error) {
-        console.error('Error checking connection status:', error);
+        console.error('Error getting connection status:', error);
         return null;
     }
 }
