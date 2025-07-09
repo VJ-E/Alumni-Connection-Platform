@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import db from "@/lib/db";
 import Opportunity from "@/models/opportunity.model";
+import { NextRequest } from "next/server";
 
 export async function GET() {
   try {
@@ -14,9 +15,9 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { userId } = getAuth();
+    const { userId } = getAuth(req);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
