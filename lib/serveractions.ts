@@ -381,6 +381,10 @@ export const getUserById = async (userId: string) => {
         const user = await User.findOne({ userId: userId }).lean();
         if (!user) return null;
         
+        // Calculate role based on graduation year if not already set
+        const currentYear = new Date().getFullYear();
+        const role = user.role || (user.graduationYear && user.graduationYear <= currentYear ? 'alumni' : 'student');
+        
         return {
             userId: user.userId,
             firstName: user.firstName,
@@ -388,7 +392,8 @@ export const getUserById = async (userId: string) => {
             email: user.email,
             profilePhoto: user.profilePhoto || "/default-avatar.png",
             description: user.description || "",
-            graduationYear: user.graduationYear
+            graduationYear: user.graduationYear,
+            role: role
         };
     } catch (error) {
         console.error('Error fetching user:', error);
