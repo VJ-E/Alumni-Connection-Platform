@@ -9,6 +9,8 @@ export interface IUser {
   description: string;
   graduationYear: number | null;
   role: 'student' | 'alumni';
+  linkedInUrl?: string;
+  githubUrl?: string;
 }
 
 export interface IUserDocument extends IUser, Document {
@@ -50,6 +52,14 @@ const userSchema = new mongoose.Schema<IUserDocument>({
     type: String,
     enum: ['student', 'alumni'],
     default: 'student',
+  },
+  linkedInUrl: {
+    type: String,
+    default: "",
+  },
+  githubUrl: {
+    type: String,
+    default: "",
   },
 }, { timestamps: true });
 

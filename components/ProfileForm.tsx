@@ -18,6 +18,8 @@ export default function ProfileForm({ initialData }: { initialData: IUser }) {
     description: initialData.description || "",
     graduationYear: initialData.graduationYear || "",
     profilePhoto: initialData.profilePhoto || "/default-avatar.png",
+    linkedInUrl: initialData.linkedInUrl || "",
+    githubUrl: initialData.githubUrl || "",
   });
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +47,12 @@ export default function ProfileForm({ initialData }: { initialData: IUser }) {
 
     try {
       await updateProfile({
-        ...formData,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        description: formData.description,
+        profilePhoto: formData.profilePhoto,
+        linkedInUrl: formData.linkedInUrl.trim(),
+        githubUrl: formData.githubUrl.trim(),
         graduationYear: Number(formData.graduationYear)
       });
       setIsEditing(false);
@@ -90,6 +97,22 @@ export default function ProfileForm({ initialData }: { initialData: IUser }) {
           <div>
             <h3 className="font-semibold mb-2">Email</h3>
             <p className="text-gray-600">{initialData.email}</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">LinkedIn</h3>
+            <a href={initialData.linkedInUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline break-all"
+            >LinkedIn</a>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">GitHub</h3>
+            <a href={initialData.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline break-all"
+            >GitHub</a>
           </div>
         </div>
       </div>
@@ -141,7 +164,25 @@ export default function ProfileForm({ initialData }: { initialData: IUser }) {
             />
           </div>
         </div>
-
+        <div>
+          <label className="block text-sm font-medium mb-1">LinkedIn URL</label>
+          <Input
+            value={formData.linkedInUrl}
+            onChange={(e)=>
+              setFormData((prev)=>({ ...prev, linkedInUrl: e.target.value}))
+            }
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">GitHub URL</label>
+          <Input
+            value={formData.githubUrl}
+            onChange={(e)=>
+              setFormData((prev)=>({ ...prev, githubUrl: e.target.value}))
+            }
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium mb-1">Description</label>
           <Textarea
