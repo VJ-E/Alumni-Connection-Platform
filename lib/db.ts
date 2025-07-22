@@ -1,19 +1,34 @@
-import mongoose, { Connection } from "mongoose";
+import mongoose from "mongoose";
 
-let isConnected:Connection | boolean = false;
+const MONGODB_URI = process.env.MONGO_URI!;
 
-const connectDB = async () => {
-    if(isConnected){
-        console.log("Mongodb already connected");
-        return isConnected;
-    }
-    try {
-        const res = await mongoose.connect(process.env.MONGO_URI!);
-        isConnected = res.connection;
-        console.log("Mongodb connected.");
-        return isConnected;
-    } catch (error) {
-        console.log(error);
-    }
+if (!MONGODB_URI) {
+  throw new Error(
+    'Please define the MONGODB_URI environment variable inside .env'
+  );
 }
+
+async function connectDB() {
+  try {
+    const opts = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    };
+
+    if (mongoose.connection.readyState === 1) {
+      console.log("Using existing MongoDB connection");
+      return mongoose.connection;
+    }
+
+    await mongoose.connect(MONGODB_URI, opts);
+    console.log("MongoDB connected successfully");
+    return mongoose.connection;
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+    throw error;
+  }
+}
+
 export default connectDB;
