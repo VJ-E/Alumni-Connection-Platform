@@ -138,7 +138,12 @@ const serializeDocument = (doc: any): SafePost | null => {
 // get all post using server actions
 export const getAllPosts = async (): Promise<SafePost[]> => {
     try {
-        await connectDB();
+        const connection = await connectDB();
+        if (!connection) {
+            console.error('Failed to establish database connection');
+            return [];
+        }
+
         const posts = await Post.find()
             .sort({ createdAt: -1 })
             .populate({ 
@@ -148,37 +153,47 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
             .lean()
             .exec();
         
-        if(!posts) return [];
+        if(!posts) {
+            console.log('No posts found');
+            return [];
+        }
         
         // For each post, get the latest user data
         const postsWithUpdatedUserData = await Promise.all(posts.map(async (post) => {
+            if (!post || !post.user || !post.user.userId) {
+                console.log('Invalid post data:', post);
+                return null;
+            }
+
             try {
-                // Get the latest user data
-                const userProfile = await User.findOne({ userId: post.user?.userId }).lean();
-                if (userProfile) {
-                    // Keep all existing user data and only update graduationYear
-                    post.user = {
+                const userProfile = await User.findOne({ userId: post.user.userId }).lean();
+                if (!userProfile) {
+                    console.log('User profile not found for:', post.user.userId);
+                    return null;
+                }
+
+                return {
+                    ...post,
+                    user: {
                         userId: post.user.userId,
-                        firstName: post.user.firstName,
-                        lastName: post.user.lastName,
-                        email: post.user.email,
-                        profilePhoto: post.user.profilePhoto,
-                        description: post.user.description || "",
+                        firstName: post.user.firstName || userProfile.firstName,
+                        lastName: post.user.lastName || userProfile.lastName,
+                        email: post.user.email || userProfile.email,
+                        profilePhoto: post.user.profilePhoto || userProfile.profilePhoto || "/default-avatar.png",
+                        description: post.user.description || userProfile.description || "",
                         graduationYear: userProfile.graduationYear,
                         role: userProfile.role || "student"
-                    };
-                }
-                return post;
+                    }
+                };
             } catch (error) {
-                console.error('Error updating user data for post:', error);
-                // Return original post if there's an error
-                return post;
+                console.error('Error updating user data for post:', error, 'Post:', post);
+                return null;
             }
         }));
         
         // Safely serialize all posts and their nested data
         const safePosts = postsWithUpdatedUserData
-            .filter(post => post && post.user) // Make sure we have valid posts with user data
+            .filter(post => post !== null) // Remove null posts
             .map(post => serializeDocument(post))
             .filter((post): post is SafePost => post !== null);
         
@@ -186,6 +201,9 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
         
     } catch (error) {
         console.error('Error in getAllPosts:', error);
+        if (error instanceof Error) {
+            console.error('Error details:', error.message, error.stack);
+        }
         return [];
     }
 }
