@@ -11,7 +11,7 @@ import { Input } from "./ui/input";
 import { toast } from "react-toastify";
 import { Badge } from "./ui/badge";
 
-type UserType = 'all' | 'student' | 'alumni';
+type UserType = 'all' | 'student' | 'alumni' | 'admin';
 
 export default function PeopleList({ currentUser }: { currentUser: any }) {
   const [users, setUsers] = useState<IUser[]>([]);
@@ -165,6 +165,12 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
           >
             Alumni Users ({users.filter(u => u.graduationYear && u.graduationYear <= currentYear).length})
           </Button>
+          <Button
+            variant={currentUser?.role === 'admin' ? 'default' : 'ghost'}
+            onClick={() => setSelectedTab('admin')}
+          >
+            Admin ({users.filter(u => u.role === 'admin').length})
+          </Button>
         </div>
       </div>
 
@@ -183,8 +189,8 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
                 {user.firstName} {user.lastName}
               </h2>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant={isAlumni ? "default" : "secondary"}>
-                  {isAlumni ? 'Alumni' : 'Student'}
+                <Badge variant={currentUser?.role === 'admin' ? "default" : isAlumni ? "default" : "secondary"}>
+                  {currentUser?.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
                 </Badge>
                 {graduationYear && (
                   <Badge variant="outline">

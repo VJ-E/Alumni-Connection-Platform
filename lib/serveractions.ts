@@ -254,9 +254,8 @@ export const deletePostAction = async (postId: string) => {
     if (!user) throw new Error('User not authenticated.');
     const post = await Post.findById(postId);
     if (!post) throw new Error('Post not found.');
-
-    // keval apni hi post delete kr payega.
-    if (post.user.userId !== user.id) {
+    const userProfile = await User.findOne({ userId: user.id });
+    if (post.user.userId !== user.id && userProfile?.role !== 'admin') {
         throw new Error('You are not an owner of this Post.');
     }
     try {
@@ -642,7 +641,7 @@ export const getUserProfile = async () => {
         const currentYear = new Date().getFullYear();
         const calculatedRole = profile.graduationYear && profile.graduationYear <= currentYear ? 'alumni' as const : 'student' as const;
         
-        if (profile.role !== calculatedRole) {
+        if (profile.role !== calculatedRole && profile.role !== 'admin') {
             profile.role = calculatedRole;
             await profile.save();
             console.log('Updated user role to:', calculatedRole);

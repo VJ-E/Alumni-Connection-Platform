@@ -16,12 +16,13 @@ import {
 import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Menu } from "lucide-react"; // hamburger icon
+import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
 
 const Navbar = () => {
   const router = useRouter();
   const { user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const { profile } = useCurrentUserProfile(user?.id);
   return (
     <div className="fixed w-full bg-white z-50 shadow-sm">
       <div className="flex items-center max-w-6xl justify-between h-14 mx-auto px-3">
@@ -46,7 +47,7 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Image
-                    src={user?.imageUrl || "/default-avatar.png"}
+                    src={profile?.profilePhoto || "/default-avatar.png"}
                     alt="Profile"
                     fill
                     className="rounded-full object-cover"

@@ -8,7 +8,7 @@ export interface IUser {
   profilePhoto: string;
   description: string;
   graduationYear: number | null;
-  role: 'student' | 'alumni';
+  role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
 }
@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   },
   role: {
     type: String,
-    enum: ['student', 'alumni'],
+    enum: ['student', 'alumni', 'admin'],
     default: 'student',
   },
   linkedInUrl: {
@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema<IUserDocument>({
 }, { timestamps: true });
 
 // Function to determine role based on graduation year
-function determineRole(graduationYear: number | null): 'student' | 'alumni' {
+function determineRole(graduationYear: number | null): 'student' | 'alumni' | 'admin' {
   if (!graduationYear) return 'student';
   const currentYear = new Date().getFullYear();
   return graduationYear <= currentYear ? 'alumni' : 'student';
@@ -72,7 +72,7 @@ function determineRole(graduationYear: number | null): 'student' | 'alumni' {
 
 // Add middleware to set role based on graduation year before saving
 userSchema.pre('save', function(next) {
-  if (this.graduationYear) {
+  if (this.graduationYear && this.role !== 'admin') {
     this.role = determineRole(this.graduationYear);
   }
   next();
@@ -96,7 +96,7 @@ userSchema.post('find', async function(docs) {
     if (!doc.graduationYear) return null;
     
     const calculatedRole = determineRole(doc.graduationYear);
-    if (doc.role !== calculatedRole) {
+    if (doc.role !== calculatedRole && doc.role !== 'admin') {
       return User.findByIdAndUpdate(doc._id, { role: calculatedRole });
     }
     return null;
@@ -112,7 +112,7 @@ userSchema.post('findOne', async function(doc) {
   if (!doc) return;
   
   const calculatedRole = determineRole(doc.graduationYear);
-  if (doc.role !== calculatedRole) {
+  if (doc.role !== calculatedRole && doc.role !== 'admin') {
     await User.findByIdAndUpdate(doc._id, { role: calculatedRole });
   }
 });

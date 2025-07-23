@@ -25,6 +25,7 @@ interface SafePost {
         profilePhoto: string;
         description: string;
         graduationYear: number | null;
+        role: string;
     };
     imageUrl?: string;
     likes?: string[];
@@ -39,6 +40,7 @@ interface SafePost {
             profilePhoto: string;
             description: string;
             graduationYear: number | null;
+            role: string;
         };
         createdAt: string;
         updatedAt: string;

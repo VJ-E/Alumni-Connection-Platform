@@ -9,6 +9,8 @@ import PostContent from "./PostContent";
 import SocialOptions from "./SocialOptions";
 import ReactTimeago from "react-timeago";
 import { deletePostAction } from "@/lib/serveractions";
+import { useAuth } from "@clerk/nextjs";
+import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
 
 interface SafePost {
     _id: string;
@@ -21,6 +23,7 @@ interface SafePost {
         profilePhoto: string;
         description: string;
         graduationYear: number | null;
+        role: string;
     };
     imageUrl?: string;
     likes?: string[];
@@ -34,6 +37,7 @@ interface SafePost {
             email: string;
             profilePhoto: string;
             description: string;
+            role: string;
             graduationYear: number | null;
         };
         createdAt: string;
@@ -48,12 +52,14 @@ const Post = ({ post }: { post: SafePost }) => {
   const fullName = post?.user?.firstName + " " + post?.user?.lastName;
   const loggedInUser = user?.id === post?.user?.userId;
   const currentYear = new Date().getFullYear();
+  const role = post?.user?.role;
   const isAlumni = post?.user?.graduationYear ? post.user.graduationYear < currentYear : false;
+  const currentUser = useCurrentUserProfile(user?.id);
 
   if (!post?.user) {
     return null;
   }
-
+  // console.log("role--------------------------", role,fullName);
   return (
     <div className="bg-white my-2 mx-2 md:mx-0 rounded-lg border border-gray-300">
       <div className="flex gap-2 p-4">
@@ -63,7 +69,7 @@ const Post = ({ post }: { post: SafePost }) => {
             <h1 className="text-sm font-bold flex items-center">
               {fullName}
               <Badge variant={"secondary"} className="ml-2">
-                {isAlumni ? 'Alumni' : 'Student'}
+                {role !== "admin" ? (isAlumni ? 'Alumni' : 'Student') : 'Admin'}
               </Badge>
               {loggedInUser && (
                 <Badge variant={"outline"} className="ml-2">
@@ -80,7 +86,7 @@ const Post = ({ post }: { post: SafePost }) => {
           </div>
         </div>
         <div>
-          {loggedInUser && (
+          {(loggedInUser || currentUser?.profile?.role === 'admin') && (
             <Button
               onClick={() => {
                 deletePostAction(post._id);

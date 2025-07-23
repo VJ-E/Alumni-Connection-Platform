@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import connectDB from "@/lib/db";
 import { User } from "@/models/user.model";
 
 export async function GET(
@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
-    await db();
+    await connectDB();
     const user = await User.findOne({ userId: params.userId });
     
     if (!user) {
@@ -17,6 +17,11 @@ export async function GET(
     return NextResponse.json({
       role: user.role,
       graduationYear: user.graduationYear,
+      profilePhoto: user.profilePhoto,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      description: user.description,
     });
   } catch (error) {
     console.error('Error fetching user:', error);

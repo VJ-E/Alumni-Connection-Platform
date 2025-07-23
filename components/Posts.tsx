@@ -15,6 +15,7 @@ interface SafePost {
         profilePhoto: string;
         description: string;
         graduationYear: number | null;
+        role: string;
     };
     imageUrl?: string;
     likes?: string[];
@@ -29,6 +30,7 @@ interface SafePost {
             profilePhoto: string;
             description: string;
             graduationYear: number | null;
+            role: string;
         };
         createdAt: string;
         updatedAt: string;
@@ -38,7 +40,7 @@ interface SafePost {
 }
 
 const Posts = ({ posts }: { posts: SafePost[] }) => {
-  const [filter, setFilter] = useState<'all' | 'students' | 'alumni'>('all');
+  const [filter, setFilter] = useState<'all' | 'students' | 'alumni' | 'admin'>('all');
   const currentYear = new Date().getFullYear();
 
   const filteredPosts = posts?.filter(post => {
@@ -50,7 +52,7 @@ const Posts = ({ posts }: { posts: SafePost[] }) => {
     // Students are those who will graduate in the current year or future
     const isAlumni = graduationYear < currentYear;
     
-    return (filter === 'alumni' && isAlumni) || (filter === 'students' && !isAlumni);
+    return (filter === 'admin' && post.user.role === 'admin') || (filter === 'alumni' && isAlumni && post.user.role !== 'admin') || (filter === 'students' && !isAlumni && post.user.role !== 'admin');
   });
 
   return (
@@ -79,6 +81,14 @@ const Posts = ({ posts }: { posts: SafePost[] }) => {
           data-state={filter === 'alumni' ? 'active' : 'inactive'}
         >
           Alumni Posts
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setFilter('admin')}
+          className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
+          data-state={filter === 'admin' ? 'active' : 'inactive'}
+        >
+          Admin Posts
         </Button>
       </div>
       
