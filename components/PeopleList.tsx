@@ -125,6 +125,8 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
         return graduationYear !== null && graduationYear > currentYear;
       case 'alumni':
         return graduationYear !== null && graduationYear <= currentYear;
+      case 'admin':
+        return user.role === 'admin';
       default:
         return true;
     }
@@ -166,7 +168,7 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
             Alumni Users ({users.filter(u => u.graduationYear && u.graduationYear <= currentYear).length})
           </Button>
           <Button
-            variant={currentUser?.role === 'admin' ? 'default' : 'ghost'}
+            variant={selectedTab === 'admin' ? 'default' : 'ghost'}
             onClick={() => setSelectedTab('admin')}
           >
             Admin ({users.filter(u => u.role === 'admin').length})
@@ -189,8 +191,8 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
                 {user.firstName} {user.lastName}
               </h2>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant={currentUser?.role === 'admin' ? "default" : isAlumni ? "default" : "secondary"}>
-                  {currentUser?.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
+                <Badge variant={user.role === 'admin' ? "default" : isAlumni ? "default" : "secondary"}>
+                  {user?.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
                 </Badge>
                 {graduationYear && (
                   <Badge variant="outline">

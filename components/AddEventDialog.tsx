@@ -43,11 +43,12 @@ export default function AddEventDialog({
   const [endTime, setEndTime] = useState("")
   const [link, setLink] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [date, setDate] = useState(() => selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!user?.firstName || !user?.emailAddresses?.[0]?.emailAddress || !selectedDate) {
+    if (!user?.firstName || !user?.emailAddresses?.[0]?.emailAddress) {
       toast.error("Missing required user information")
       return
     }
@@ -55,7 +56,7 @@ export default function AddEventDialog({
     const newEvent: Event = {
       title,
       description,
-      date: format(selectedDate, 'yyyy-MM-dd'),
+      date: date,
       startTime,
       endTime,
       link: link || undefined,
@@ -113,6 +114,18 @@ export default function AddEventDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Event title"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="date" className="text-sm font-medium">
+              Date
+            </label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               required
             />
           </div>

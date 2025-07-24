@@ -31,7 +31,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${inter.className} min-h-screen flex flex-col`}>
           <NavbarWrapper />
-          <div className="md:bg-[#F4F2EE] flex-1 w-full">
+          <div className="md:bg-[#F4F2EE] flex-1 w-full pt-10">
             <main className="max-w-6xl mx-auto">
               {children}
               <Toaster position="top-right" />
