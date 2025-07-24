@@ -74,7 +74,7 @@ export default function OpportunitiesPage() {
   const getEventsForDate = (date: Date) => {
     return events.filter(event => 
       format(event.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-    )
+  )
   }
 
   // Custom tile content to show event indicators
@@ -94,13 +94,13 @@ export default function OpportunitiesPage() {
       <div className="w-full md:w-3/4">
         <Card className="p-4">
           <div className="calendar-container">
-            <Calendar
+          <Calendar
               onChange={(value) => {
                 if (value instanceof Date) {
                   setSelectedDate(value)
-                  if (isAlumni) {
-                    setIsAddEventOpen(true)
-                  }
+              if (isAlumni) {
+                setIsAddEventOpen(true)
+              }
                 }
               }}
               value={selectedDate}
@@ -109,8 +109,8 @@ export default function OpportunitiesPage() {
               tileClassName={({ date }) => {
                 const dateEvents = getEventsForDate(date)
                 return dateEvents.length > 0 ? 'has-events' : ''
-              }}
-            />
+            }}
+          />
           </div>
         </Card>
       </div>
