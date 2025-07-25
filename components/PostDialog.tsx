@@ -14,6 +14,7 @@ import { readFileAsDataUrl } from "@/lib/utils";
 import Image from "next/image";
 import { createPostAction } from "@/lib/serveractions";
 import { toast } from "react-toastify";
+import { revalidatePath } from "next/cache";
 
 export function PostDialog({
   setOpen,
@@ -57,6 +58,7 @@ export function PostDialog({
       setInputText("");
       setSelectedFile("");
       setOpen(false);
+      revalidatePath("/");
     } catch (error: any) {
       console.error("Error creating post:", error);
       toast.error(error.message || "Something went wrong");

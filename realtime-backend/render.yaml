@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: alumni-realtime-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mongodb-alumni
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: https://your-frontend-url.vercel.app  # Update this with your actual frontend URL
+    plan: free
+    numInstances: 1

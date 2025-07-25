@@ -63,7 +63,7 @@ const Post = ({ post }: { post: SafePost }) => {
   return (
     <div className="bg-white my-2 mx-2 md:mx-0 rounded-lg border border-gray-300">
       <div className="flex gap-2 p-4">
-        <ProfilePhoto src={post.user.profilePhoto} />
+        <ProfilePhoto src={post.user.profilePhoto} userId={post.user.userId} />
         <div className="flex items-center justify-between w-full">
           <div>
             <h1 className="text-sm font-bold flex items-center">
