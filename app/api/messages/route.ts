@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuth } from '@clerk/nextjs/server';
+import { NextRequest } from 'next/server';
 import mongoose from 'mongoose';
 
 // Connect to MongoDB
@@ -35,7 +36,7 @@ const Message = mongoose.models.Message || mongoose.model('Message', new mongoos
   isOptimistic: { type: Boolean, default: false }
 }));
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const receiverId = searchParams.get('receiverId');
