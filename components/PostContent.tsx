@@ -6,7 +6,7 @@ import Image from 'next/image';
 function linkify(text: string): string {
   const urlRegex = /(\bhttps?:\/\/[^\s]+)/g;
   return text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">${url}</a>`;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary underline hover:text-primary/80">${url}</a>`;
   });
 }
 
@@ -47,7 +47,7 @@ interface SafePost {
 const PostContent = ({ post }: { post: SafePost }) => {
   return (
     <div className="px-4 pb-2">
-      <p className="text-sm" dangerouslySetInnerHTML={{ __html: linkify(post.description) }}/>
+      <p className="text-sm text-foreground" dangerouslySetInnerHTML={{ __html: linkify(post.description) }}/>
       {post.imageUrl && (
         <div className="relative w-full h-96 mt-2">
           <Image

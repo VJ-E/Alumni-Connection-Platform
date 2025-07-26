@@ -6,9 +6,9 @@ export default async function PeoplePage() {
   const userData = JSON.parse(JSON.stringify(user));
 
   return (
-    <div className="pt-20">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 px-4">People You May Know</h1>
+    <div className="pt-20 min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4">
+        <h1 className="text-2xl font-bold mb-6 text-foreground">People You May Know</h1>
         <PeopleList currentUser={userData} />
       </div>
     </div>

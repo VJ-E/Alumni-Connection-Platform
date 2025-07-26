@@ -29,7 +29,7 @@ const Navbar = () => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   return (
-    <div className="fixed w-full bg-white z-50 shadow-sm">
+    <div className="fixed w-full bg-background z-50 shadow-sm border-b border-border">
       <div className="flex items-center max-w-6xl justify-between h-14 mx-auto px-3">
         {/* Logo & Search */}
         <div className="flex items-center gap-2">
@@ -39,7 +39,7 @@ const Navbar = () => {
             width={50}
             height={50}
           />
-          <h1 className="text-2xl font-bold hidden md:block">Alumni Connection</h1>
+          <h1 className="text-2xl font-bold hidden md:block text-foreground">Alumni Connection</h1>
           {/* <div className="hidden md:block">
             <SearchInput />
           </div> */}
@@ -59,9 +59,9 @@ const Navbar = () => {
             >
               <span className="sr-only">Toggle theme</span>
               {theme === "dark" ? (
-                <Sun className="h-6 w-6 text-yellow-400 transition-transform duration-300 rotate-0 scale-100" />
+                <Sun className="h-6 w-6 text-foreground transition-transform duration-300 rotate-0 scale-100" />
               ) : (
-                <Moon className="h-6 w-6 text-gray-800 transition-transform duration-300 rotate-0 scale-100" />
+                <Moon className="h-6 w-6 text-foreground transition-transform duration-300 rotate-0 scale-100" />
               )}
             </Button>
           )}
@@ -84,7 +84,7 @@ const Navbar = () => {
                   </DropdownMenuItem>
                 </Link>
                 <SignOutButton>
-                  <DropdownMenuItem className="cursor-pointer text-red-600">
+                  <DropdownMenuItem className="cursor-pointer text-destructive">
                     Sign Out
                   </DropdownMenuItem>
                 </SignOutButton>
@@ -112,14 +112,15 @@ const Navbar = () => {
 
       {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white shadow p-4 flex flex-col gap-2">
-          <Link href="/">Feed</Link>
+        <div className="md:hidden bg-background shadow p-4 flex flex-col gap-2 border-t border-border">
+          <Link href="/">HomePage</Link>
           <Link href="/profile">Profile</Link>
           <Link href="/opportunities">Opportunities</Link>
           <Link href="/people">People</Link>
+          <Link href="/messages">Messages</Link>
           <SignedIn>
             <SignOutButton>
-              <span className="text-red-600 cursor-pointer">Sign Out</span>
+              <span className="text-destructive cursor-pointer">Sign Out</span>
             </SignOutButton>
           </SignedIn>
           <SignedOut>

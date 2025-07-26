@@ -27,18 +27,42 @@ export default function RootLayout({
     <ClerkProvider
       appearance={{
         baseTheme: undefined,
-        variables: { colorPrimary: '#0066FF' }
+        variables: { 
+          colorPrimary: 'hsl(var(--primary))',
+          colorText: 'hsl(var(--foreground))',
+          colorTextSecondary: 'hsl(var(--muted-foreground))',
+          colorBackground: 'hsl(var(--background))',
+          colorInputBackground: 'hsl(var(--background))',
+          colorInputText: 'hsl(var(--foreground))',
+        }
       }}
     >
       <html lang="en">
         <body className={`${inter.className} min-h-screen flex flex-col`}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider 
+            attribute="class" 
+            defaultTheme="system" 
+            enableSystem
+            disableTransitionOnChange
+          >
             <SocketProvider>
               <NavbarWrapper />
-              <div className="md:bg-[#F4F2EE] flex-1 w-full pt-10">
-                <main className="max-w-6xl mx-auto">
+              <div className="flex-1 w-full pt-10 bg-background">
+                <main className="max-w-6xl mx-auto px-4">
                   {children}
-                  <Toaster position="top-right" />
+                  <Toaster 
+                    position="top-right" 
+                    theme="system"
+                    toastOptions={{
+                      className: 'toast group',
+                      classNames: {
+                        toast: 'group-[.toast]:bg-background group-[.toast]:text-foreground group-[.toast]:border-border group-[.toast]:shadow-lg',
+                        description: 'group-[.toast]:text-muted-foreground',
+                        actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+                        cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+                      },
+                    }}
+                  />
                 </main>
               </div>
               <Analytics />

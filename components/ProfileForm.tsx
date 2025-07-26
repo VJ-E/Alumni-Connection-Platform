@@ -66,7 +66,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
 
   if (!isEditing) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-card text-card-foreground rounded-lg border border-border p-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center space-x-4">
             <div className="relative h-24 w-24">
@@ -81,7 +81,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
               <h2 className="text-2xl font-bold">
                 {initialData.firstName} {initialData.lastName}
               </h2>
-              <p className="text-gray-600">Batch of {initialData.graduationYear}</p>
+              <p className="text-muted-foreground">Batch of {initialData.graduationYear}</p>
             </div>
           </div>
           {!readOnly && (
@@ -92,20 +92,20 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold mb-2">About</h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {initialData.description || "No description added yet."}
             </p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Email</h3>
-            <p className="text-gray-600">{initialData.email}</p>
+            <p className="text-muted-foreground">{initialData.email}</p>
           </div>
           <div>
             <h3 className="font-semibold mb-2">LinkedIn</h3>
             <a href={initialData.linkedInUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline break-all"
+              className="text-primary hover:underline break-all"
             >LinkedIn</a>
           </div>
           <div>
@@ -113,7 +113,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
             <a href={initialData.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline break-all"
+              className="text-primary hover:underline break-all"
             >GitHub</a>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+    <form onSubmit={handleSubmit} className="bg-card text-card-foreground rounded-lg border border-border p-6">
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           <div className="relative h-24 w-24">
@@ -140,13 +140,13 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
               onChange={handleImageChange}
               className="mb-2"
             />
-            <p className="text-sm text-gray-500">Max size: 5MB</p>
+            <p className="text-sm text-muted-foreground">Max size: 5MB</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">First Name</label>
+            <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
             <Input
               value={formData.firstName}
               onChange={(e) =>
@@ -156,7 +156,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Last Name</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
             <Input
               value={formData.lastName}
               onChange={(e) =>

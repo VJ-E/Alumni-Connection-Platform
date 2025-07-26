@@ -73,7 +73,7 @@ const Feed = ({ user }: { user: SafeUser | null }) => {
     }, []);
 
     if (!user) {
-        return <div className="text-center py-4">Please sign in to view posts.</div>;
+        return <div className="text-center py-4 text-foreground">Please sign in to view posts.</div>;
     }
 
     if (error) {
@@ -84,7 +84,7 @@ const Feed = ({ user }: { user: SafeUser | null }) => {
         <div className='flex-1'>
             <PostInput />
             {loading ? (
-                <div className="text-center py-4">Loading posts...</div>
+                <div className="text-center py-4 text-foreground">Loading posts...</div>
             ) : (
                 <Posts posts={posts} />
             )}

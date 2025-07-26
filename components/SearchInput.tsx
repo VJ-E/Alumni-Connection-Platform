@@ -7,7 +7,7 @@ const SearchInput = () => {
         <Input 
         type="text" 
         placeholder="Search and Connect......" 
-        className="bg-[#EDF3F8] w-80 rounded-lg border-none"
+        className="w-80 bg-accent/50 focus:bg-background focus-visible:ring-2 focus-visible:ring-ring"
         />
     </div>
   )

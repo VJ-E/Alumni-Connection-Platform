@@ -74,14 +74,14 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
   };
 
   return (
-    <div className="border-t">
+    <div className="border-t border-border">
       <div className="flex items-center gap-4 p-2">
         <Button
           onClick={handleLike}
           variant="ghost"
           size="sm"
           disabled={isLoading}
-          className={`flex items-center gap-2 ${isLiked ? 'text-red-500' : ''}`}
+          className={`flex items-center gap-2 ${isLiked ? 'text-destructive' : 'text-muted-foreground'}`}
         >
           <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
           <span>{likeCount}</span>
@@ -90,7 +90,7 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
           onClick={() => setShowComments(!showComments)}
           variant="ghost"
           size="sm"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 text-muted-foreground"
         >
           <MessageCircle className="w-5 h-5" />
           <span>{post.comments?.length || 0}</span>

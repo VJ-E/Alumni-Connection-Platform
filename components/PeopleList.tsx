@@ -79,7 +79,7 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
     switch (status) {
       case "pending":
         return (
-          <Button disabled className="w-full">
+          <Button variant="outline" disabled className="w-full">
             Pending
           </Button>
         );
@@ -91,7 +91,7 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
         );
       case "rejected":
         return (
-          <Button disabled className="w-full">
+          <Button variant="outline" disabled className="w-full">
             Connection Declined
           </Button>
         );
@@ -138,37 +138,37 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
 
   return (
     <div>
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-border">
         <div className="relative mb-4">
-          <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search people"
-            className="pl-10"
+            className="pl-10 bg-background"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex gap-2">
           <Button
-            variant={selectedTab === 'all' ? 'default' : 'ghost'}
+            variant={selectedTab === 'all' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('all')}
           >
             All Users ({users.length})
           </Button>
           <Button
-            variant={selectedTab === 'student' ? 'default' : 'ghost'}
+            variant={selectedTab === 'student' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('student')}
           >
             Student Users ({users.filter(u => u.graduationYear && u.graduationYear > currentYear).length})
           </Button>
           <Button
-            variant={selectedTab === 'alumni' ? 'default' : 'ghost'}
+            variant={selectedTab === 'alumni' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('alumni')}
           >
             Alumni Users ({users.filter(u => u.graduationYear && u.graduationYear <= currentYear).length})
           </Button>
           <Button
-            variant={selectedTab === 'admin' ? 'default' : 'ghost'}
+            variant={selectedTab === 'admin' ? 'default' : 'outline'}
             onClick={() => setSelectedTab('admin')}
           >
             Admin ({users.filter(u => u.role === 'admin').length})
@@ -184,11 +184,11 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
           return (
             <div
               key={user.userId}
-              className="bg-white p-6 rounded-lg border border-gray-300 flex flex-col items-center"
+              className="bg-card text-card-foreground p-6 rounded-lg border border-border flex flex-col items-center hover:shadow-md transition-shadow"
             >
               {/* <ProfilePhoto src={user.profilePhoto || "/default-avatar.png"} /> */}
               <ProfilePhoto src={user.profilePhoto} userId={user.userId} />
-              <h2 className="mt-4 font-semibold text-lg">
+              <h2 className="mt-4 font-semibold text-lg text-foreground">
                 {user.firstName} {user.lastName}
               </h2>
               <div className="flex items-center gap-2 mb-2">

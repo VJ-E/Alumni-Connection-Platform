@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 const ProfilePhoto = ({ src, alt = "Profile photo", userId }: { src: string; alt?: string; userId?: string }) => {
     const avatar = (
-            <Avatar className='cursor-pointer'>
+            <Avatar className='cursor-pointer hover:ring-2 hover:ring-ring transition-all'>
                 <AvatarImage 
                     src={src} 
                     alt={alt}
@@ -16,7 +16,7 @@ const ProfilePhoto = ({ src, alt = "Profile photo", userId }: { src: string; alt
     if (userId) {
         return <Link href={`/profile/${userId}`}>{avatar}</Link>;
     }
-    return <div>{avatar}</div>;
+    return <div className="inline-flex">{avatar}</div>;
 }
 
 export default ProfilePhoto

@@ -57,35 +57,35 @@ const Posts = ({ posts }: { posts: SafePost[] }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 p-4 border-b bg-white sticky top-[4rem] z-10">
+      <div className="flex gap-2 p-4 border-b border-border bg-card/50 backdrop-blur-md sticky top-[4rem] z-10">
         <Button
           variant="ghost"
+          className="hover:bg-accent/50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
           onClick={() => setFilter('all')}
-          className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
           data-state={filter === 'all' ? 'active' : 'inactive'}
         >
           All Posts
         </Button>
         <Button
           variant="ghost"
+          className="hover:bg-accent/50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
           onClick={() => setFilter('students')}
-          className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
           data-state={filter === 'students' ? 'active' : 'inactive'}
         >
           Student Posts
         </Button>
         <Button
           variant="ghost"
+          className="hover:bg-accent/50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
           onClick={() => setFilter('alumni')}
-          className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
           data-state={filter === 'alumni' ? 'active' : 'inactive'}
         >
           Alumni Posts
         </Button>
         <Button
           variant="ghost"
+          className="hover:bg-accent/50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
           onClick={() => setFilter('admin')}
-          className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
           data-state={filter === 'admin' ? 'active' : 'inactive'}
         >
           Admin Posts
@@ -97,7 +97,7 @@ const Posts = ({ posts }: { posts: SafePost[] }) => {
           post && post.user && <Post key={post._id} post={post} />
         ))}
         {(!filteredPosts || filteredPosts.length === 0) && (
-          <div className="text-center py-8 bg-white rounded-lg border">
+          <div className="text-center py-8 bg-card/50 text-muted-foreground rounded-lg border border-border">
             <p className="text-gray-500">
               No posts found for this filter.
             </p>

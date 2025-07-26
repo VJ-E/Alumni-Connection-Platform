@@ -26,7 +26,7 @@ const newsItems: NAVITEMS[] = [
 
 const News = () => {
   return (
-    <div className='hidden md:block w-[25%] bg-white h-fit rounded-lg border border-gray-300'>
+    <div className='hidden md:block w-[25%] bg-card text-card-foreground h-fit rounded-lg border border-border'>
       <div className='flex items-center justify-between p-3'>
         <h1 className='font-medium'>Alumni News</h1>
         <Info size={18} />
@@ -35,9 +35,9 @@ const News = () => {
 {
   newsItems.map((item, index)=>{
     return (
-      <div key={index} className='px-3 py-2 hover:bg-gray-200 hover:cursor-pointer'>
-        <h1 className='text-sm font-medium'>{item.heading}</h1>
-        <p className='text-xs text-gray-600'>{item.subHeading}</p>
+      <div key={index} className='px-3 py-2 hover:bg-accent hover:cursor-pointer transition-colors'>
+        <h1 className='text-sm font-medium text-foreground'>{item.heading}</h1>
+        <p className='text-xs text-muted-foreground'>{item.subHeading}</p>
       </div>
     )
   })

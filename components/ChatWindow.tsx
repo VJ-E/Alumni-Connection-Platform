@@ -299,14 +299,14 @@ export default function ChatWindow({
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading...</div>;
+    return <div className="text-center py-4 text-foreground">Loading...</div>;
   }
 
     if (connectionStatus !== 'accepted') {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8">
         <h2 className="text-xl font-semibold mb-4">Cannot Send Messages</h2>
-        <p className="text-gray-500 text-center">
+        <p className="text-muted-foreground text-center">
           You need to be connected with {otherUser.firstName} to send messages.
           {connectionStatus === 'pending' && " A connection request is pending."}
         </p>
@@ -317,14 +317,14 @@ export default function ChatWindow({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="border-b p-4 flex items-center space-x-3">
+      <div className="border-b border-border p-4 flex items-center space-x-3 bg-card">
         <div className="h-10 w-10">
           <ProfilePhoto src={otherUser.profilePhoto} alt={otherUser.firstName} />
         </div>
         <div>
           <h2 className="font-semibold">{`${otherUser.firstName} ${otherUser.lastName}`}</h2>
           {otherUserTyping && (
-            <p className="text-xs text-gray-500">typing...</p>
+            <p className="text-xs text-muted-foreground">typing...</p>
           )}
         </div>
       </div>
@@ -345,8 +345,8 @@ export default function ChatWindow({
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                   message.senderId === currentUser.userId
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-800'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-foreground'
                 }`}
               >
                 {message.imageUrl && message.imageUrl !== 'uploading...' && (
@@ -361,7 +361,7 @@ export default function ChatWindow({
                   </div>
                 )}
                 {message.imageUrl === 'uploading...' && (
-                  <div className="mb-2 p-4 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="mb-2 p-4 bg-muted rounded-lg flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   </div>
                 )}
@@ -384,7 +384,7 @@ export default function ChatWindow({
       </div>
 
       {/* Message Input */}
-      <form onSubmit={handleSendMessage} className="border-t p-4">
+      <form onSubmit={handleSendMessage} className="border-t border-border p-4 bg-card">
         <div className="flex items-end space-x-2">
           <div className="relative flex-1">
             <Textarea
@@ -408,7 +408,7 @@ export default function ChatWindow({
                 onChange={handleImageChange}
                 disabled={imageUploading}
               />
-              <Images className={`h-5 w-5 ${imageUploading ? 'text-gray-300' : 'text-gray-500 hover:text-gray-700'}`} />
+              <Images className={`h-5 w-5 ${imageUploading ? 'text-muted-foreground/50' : 'text-muted-foreground hover:text-foreground'}`} />
             </label>
           </div>
           <Button 

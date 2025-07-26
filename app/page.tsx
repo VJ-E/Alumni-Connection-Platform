@@ -25,11 +25,23 @@ export default async function Home() {
   } : null;
    
   return (
-    <div className="pt-20">
-      <div className="max-w-6xl mx-auto flex justify-between gap-8">
+    <div className="pt-20 min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto flex justify-between gap-8 px-4">
         <Feed user={userData}/>
       </div>
-      <ToastContainer />
+      <ToastContainer 
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        className="toast-container"
+      />
     </div>
   );
 }

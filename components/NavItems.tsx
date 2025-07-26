@@ -19,8 +19,8 @@ export default function NavItems() {
         href="/"
         className={`p-3 rounded-lg transition-colors ${
           isActive("/")
-            ? "bg-blue-100 text-blue-600"
-            : "hover:bg-gray-100 text-gray-600"
+            ? "bg-accent text-accent-foreground"
+            : "hover:bg-accent/50 text-muted-foreground"
         }`}
       >
         <Home className="h-6 w-6" />
@@ -30,8 +30,8 @@ export default function NavItems() {
         href="/people"
         className={`p-3 rounded-lg transition-colors ${
           isActive("/people")
-            ? "bg-blue-100 text-blue-600"
-            : "hover:bg-gray-100 text-gray-600"
+            ? "bg-accent text-accent-foreground"
+            : "hover:bg-accent/50 text-muted-foreground"
         }`}
       >
         <Users className="h-6 w-6" />
@@ -41,8 +41,8 @@ export default function NavItems() {
         href="/opportunities"
         className={`p-3 rounded-lg transition-colors ${
           isActive("/opportunities")
-            ? "bg-blue-100 text-blue-600"
-            : "hover:bg-gray-100 text-gray-600"
+            ? "bg-accent text-accent-foreground"
+            : "hover:bg-accent/50 text-muted-foreground"
         }`}
       >
         <Briefcase className="h-6 w-6" />
@@ -52,8 +52,8 @@ export default function NavItems() {
         href="/messages"
         className={`p-3 rounded-lg transition-colors ${
           pathname.startsWith("/messages")
-            ? "bg-blue-100 text-blue-600"
-            : "hover:bg-gray-100 text-gray-600"
+            ? "bg-accent text-accent-foreground"
+            : "hover:bg-accent/50 text-muted-foreground"
         }`}
       >
         <MessageSquare className="h-6 w-6" />
