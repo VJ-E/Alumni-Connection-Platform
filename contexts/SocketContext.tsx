@@ -1,11 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { useUser } from '@clerk/nextjs';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import SocketIOClient from 'socket.io-client';
+const io = SocketIOClient;
+type SocketType = ReturnType<typeof SocketIOClient>;
+import { useAuth } from "@clerk/nextjs";
 
 type SocketContextType = {
-  socket: Socket | null;
+  socket: SocketType | null;
   isConnected: boolean;
 };
 
@@ -17,16 +19,16 @@ export const SocketContext = createContext<SocketContextType>({
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const { user, isLoaded } = useUser();
+  const { userId, isLoaded } = useAuth();
 
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded || !userId) return;
 
     // Initialize socket connection
     const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
-      withCredentials: true,
+      transports: ['websocket'],
       autoConnect: true,
     });
 
@@ -36,7 +38,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setIsConnected(true);
       
       // Join the user's room
-      socketInstance.emit('join', user.id);
+      socketInstance.emit('join', userId);
     });
 
     socketInstance.on('disconnect', () => {
@@ -44,7 +46,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setIsConnected(false);
     });
 
-    socketInstance.on('connect_error', (error) => {
+    socketInstance.on('connect_error', (error: Error) => {
       console.error('Socket connection error:', error);
     });
 
@@ -59,7 +61,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         socketInstance.disconnect();
       }
     };
-  }, [isLoaded, user]);
+  }, [isLoaded, userId]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

@@ -2,11 +2,13 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { io, Socket } from 'socket.io-client';
+import SocketIOClient from 'socket.io-client';
+const io = SocketIOClient;
+type SocketType = ReturnType<typeof SocketIOClient>;
 import { SocketContext } from "@/contexts/SocketContext";
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { isLoaded, userId } = useAuth();
 
@@ -15,7 +17,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     // Initialize socket connection
     const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
-      withCredentials: true,
+      transports: ['websocket'],
       autoConnect: true,
     });
 
@@ -33,7 +35,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setIsConnected(false);
     });
 
-    socketInstance.on('connect_error', (error) => {
+    socketInstance.on('connect_error', (error: Error) => {
       console.error('Socket connection error:', error);
     });
 
