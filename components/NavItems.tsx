@@ -59,7 +59,7 @@ export default function NavItems() {
         <MessageSquare className="h-6 w-6" />
       </Link>
 
-      <div className="mt-auto">
+      {/* <div className="mt-auto">
         <SignOutButton>
           <Button
             variant="ghost"
@@ -69,7 +69,7 @@ export default function NavItems() {
             <LogOut className="h-6 w-6" />
           </Button>
         </SignOutButton>
-      </div>
+      </div> */}
     </div>
   );
 }
