@@ -8,26 +8,44 @@ if (!MONGODB_URI) {
   );
 }
 
+interface ConnectionCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+let cached: ConnectionCache = {
+  conn: null,
+  promise: null
+};
+
 async function connectDB() {
-  try {
+  if (cached.conn) {
+    console.log("Using existing MongoDB connection");
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
+      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+      family: 4  // Use IPv4, skip trying IPv6
     };
 
-    if (mongoose.connection.readyState === 1) {
-      console.log("Using existing MongoDB connection");
-      return mongoose.connection;
-    }
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("MongoDB connected successfully");
+      return mongoose;
+    });
+  }
 
-    await mongoose.connect(MONGODB_URI, opts);
-    console.log("MongoDB connected successfully");
-    return mongoose.connection;
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw error;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (e) {
+    cached.promise = null;
+    console.error("MongoDB connection error:", e);
+    throw e;
   }
 }
 
