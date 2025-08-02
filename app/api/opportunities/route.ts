@@ -4,6 +4,8 @@ import db from "@/lib/db";
 import Opportunity from "@/models/opportunity.model";
 import { NextRequest } from "next/server";
 
+
+
 export async function GET() {
   try {
     await db();
