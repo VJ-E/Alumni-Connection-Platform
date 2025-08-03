@@ -65,7 +65,7 @@ export default async function UserProfilePage({ params }: { params: { userId: st
           <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm">
             <div className="p-6">
               <h1 className="text-2xl font-bold mb-8 text-foreground">
-                {safeProfile.firstName} {safeProfile.lastName}'s Profile
+                {safeProfile.firstName} {safeProfile.lastName}&apos;s Profile
               </h1>
               <ProfileForm 
                 initialData={safeProfile} 

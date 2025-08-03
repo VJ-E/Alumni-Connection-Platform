@@ -37,7 +37,7 @@ export default async function ChatPage({ params }: { params: { userId: string } 
       return (
         <div className="pt-20 min-h-screen bg-background flex items-center justify-center">
           <div className="text-destructive text-lg font-medium">
-            The user you're trying to message doesn't exist or has been deleted.
+            The user you&apos;re trying to message doesn&apos;t exist or has been deleted.
           </div>
         </div>
       );
