@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ProfilePhoto from "./shared/ProfilePhoto";
 import { Button } from "./ui/button";
 import { getAllUsers, sendConnectionRequest, getConnectionStatus } from "@/lib/serveractions";
-import { IUser } from "@/models/user.model";
+import { IUser, Department } from "@/models/user.model";
 import Link from "next/link";
 import { SearchIcon } from "lucide-react";
 import { Input } from "./ui/input";
@@ -25,16 +25,20 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
     async function fetchUsers() {
       try {
         const allUsers = await getAllUsers();
-        // Filter out the current user
-        const otherUsers = allUsers.filter(
-          (user: IUser) => user.userId !== currentUser?.id
-        );
-        setUsers(otherUsers);
+        // Filter out the current user and ensure proper typing
+        const otherUsers = allUsers
+          .filter((user) => user.userId !== currentUser?.id)
+          .map(user => ({
+            ...user,
+            department: user.department as Department
+          }));
+          
+        setUsers(otherUsers as IUser[]);
 
         // Fetch connection status for each user
         const statuses: Record<string, string> = {};
         await Promise.all(
-          otherUsers.map(async (user: IUser) => {
+          otherUsers.map(async (user) => {
             const status = await getConnectionStatus(user.userId);
             if (status) statuses[user.userId] = status;
           })

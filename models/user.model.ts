@@ -1,24 +1,32 @@
-import mongoose, { Document, Model } from "mongoose";
+import mongoose, { Document, Model, Types } from "mongoose";
+
+export type Department = 'CSE(AI&ML)' | 'CSE' | 'CSBS' | 'AI&DS' | '';
 
 export interface IUser {
   userId: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
   profilePhoto: string;
   description: string;
   graduationYear: number | null;
+  department: Department;
+  // major: string;
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface IUserDocument extends IUser, Document {
+  _id: Types.ObjectId;
+  __v: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const userSchema = new mongoose.Schema<IUserDocument>({
+const userSchema = new mongoose.Schema<IUser>({
   userId: {
     type: String,
     required: true,
@@ -47,6 +55,11 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   graduationYear: {
     type: Number,
     default: null,
+  },
+  department: {
+    type: String,
+    enum: ['CSE(AI&ML)', 'CSE', 'CSBS', 'AI&DS'],
+    default: '',
   },
   role: {
     type: String,

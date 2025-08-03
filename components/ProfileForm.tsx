@@ -5,6 +5,10 @@ import { IUser } from "@/models/user.model";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Department } from "@/models/user.model";
+
+const departments: Department[] = ['CSE(AI&ML)', 'CSE', 'CSBS', 'AI&DS'];
 import { updateProfile } from "@/lib/serveractions";
 import Image from "next/image";
 import { toast } from "react-toastify";
@@ -17,6 +21,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
     lastName: initialData.lastName,
     description: initialData.description || "",
     graduationYear: initialData.graduationYear || "",
+    department: initialData.department || "",
     profilePhoto: initialData.profilePhoto || "/default-avatar.png",
     linkedInUrl: initialData.linkedInUrl || "",
     githubUrl: initialData.githubUrl || "",
@@ -53,7 +58,8 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
         profilePhoto: formData.profilePhoto,
         linkedInUrl: formData.linkedInUrl.trim(),
         githubUrl: formData.githubUrl.trim(),
-        graduationYear: Number(formData.graduationYear)
+        graduationYear: Number(formData.graduationYear),
+        department: formData.department as Department
       });
       setIsEditing(false);
       toast.success("Profile updated successfully!");
@@ -81,6 +87,7 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
               <h2 className="text-2xl font-bold">
                 {initialData.firstName} {initialData.lastName}
               </h2>
+              <p className="text-muted-foreground">{initialData.department || ''}</p>
               <p className="text-muted-foreground">Batch of {initialData.graduationYear}</p>
             </div>
           </div>
@@ -101,20 +108,20 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
             <p className="text-muted-foreground">{initialData.email}</p>
           </div>
           <div>
-            <h3 className="font-semibold mb-2">LinkedIn</h3>
+            {/* <h3 className="font-semibold mb-2">LinkedIn</h3> */}
             <a href={initialData.linkedInUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline break-all"
-            >LinkedIn</a>
+            >LinkedIn - {initialData.linkedInUrl}</a>
           </div>
           <div>
-            <h3 className="font-semibold mb-2">GitHub</h3>
+            {/* <h3 className="font-semibold mb-2">GitHub</h3> */}
             <a href={initialData.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline break-all"
-            >GitHub</a>
+            >GitHub - {initialData.githubUrl}</a>
           </div>
         </div>
       </div>
@@ -166,6 +173,27 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
             />
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1">Department</label>
+          <Select
+            value={formData.department}
+            onValueChange={(value: Department) =>
+              setFormData((prev) => ({ ...prev, department: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select department" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((dept) => (
+                <SelectItem key={dept} value={dept}>
+                  {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div>
           <label className="block text-sm font-medium mb-1">LinkedIn URL</label>
           <Input
@@ -173,7 +201,6 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
             onChange={(e)=>
               setFormData((prev)=>({ ...prev, linkedInUrl: e.target.value}))
             }
-            required
           />
         </div>
         <div>
