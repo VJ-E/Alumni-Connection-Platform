@@ -3,16 +3,12 @@
 import { Post } from "@/models/post.model";
 import { IUser, User } from "@/models/user.model";
 import { Message } from "@/models/message.model";
-import { Connection, IConnection } from "@/models/connection.model";
+import { Connection } from "@/models/connection.model";
 import { currentUser } from "@clerk/nextjs/server"
 import { v2 as cloudinary } from 'cloudinary';
 import connectDB from "./db";
 import { revalidatePath } from "next/cache";
 import { Comment } from "@/models/comment.model";
-import mongoose, { Model } from "mongoose";
-
-// Type assertion for Connection model
-const ConnectionModel: Model<IConnection> = Connection;
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -27,8 +23,8 @@ const createUserObject = async (user: any) => {
     
     return {
         userId: user.id,
-        firstName: user.firstName || "Patel",
-        lastName: user.lastName || "Mern Stack",
+        firstName: user.firstName || "Unknown User",
+        lastName: user.lastName || " ",
         email: user.emailAddresses[0]?.emailAddress || "",
         profilePhoto: user.imageUrl || "/default-avatar.png",
         description: userProfile?.description || "",
@@ -65,15 +61,6 @@ interface SafePost {
     comments?: SafeComment[];
     createdAt: string;
     updatedAt: string;
-}
-
-interface IConnectionRequest {
-    _id: mongoose.Types.ObjectId;
-    senderId: string;
-    receiverId: string;
-    status: string;
-    createdAt: Date;
-    updatedAt: Date;
 }
 
 // Helper function to safely serialize any MongoDB document
@@ -138,12 +125,7 @@ const serializeDocument = (doc: any): SafePost | null => {
 // get all post using server actions
 export const getAllPosts = async (): Promise<SafePost[]> => {
     try {
-        const connection = await connectDB();
-        if (!connection) {
-            console.error('Failed to establish database connection');
-            return [];
-        }
-
+        await connectDB();
         const posts = await Post.find()
             .sort({ createdAt: -1 })
             .populate({ 
@@ -153,47 +135,37 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
             .lean()
             .exec();
         
-        if(!posts) {
-            console.log('No posts found');
-            return [];
-        }
+        if(!posts) return [];
         
         // For each post, get the latest user data
         const postsWithUpdatedUserData = await Promise.all(posts.map(async (post) => {
-            if (!post || !post.user || !post.user.userId) {
-                console.log('Invalid post data:', post);
-                return null;
-            }
-
             try {
-                const userProfile = await User.findOne({ userId: post.user.userId }).lean();
-                if (!userProfile) {
-                    console.log('User profile not found for:', post.user.userId);
-                    return null;
-                }
-
-                return {
-                    ...post,
-                    user: {
+                // Get the latest user data
+                const userProfile = await User.findOne({ userId: post.user?.userId }).lean();
+                if (userProfile) {
+                    // Keep all existing user data and only update graduationYear
+                    post.user = {
                         userId: post.user.userId,
-                        firstName: post.user.firstName || userProfile.firstName,
-                        lastName: post.user.lastName || userProfile.lastName,
-                        email: post.user.email || userProfile.email,
-                        profilePhoto: post.user.profilePhoto || userProfile.profilePhoto || "/default-avatar.png",
-                        description: post.user.description || userProfile.description || "",
+                        firstName: post.user.firstName,
+                        lastName: post.user.lastName,
+                        email: post.user.email,
+                        profilePhoto: post.user.profilePhoto,
+                        description: post.user.description || "",
                         graduationYear: userProfile.graduationYear,
                         role: userProfile.role || "student"
-                    }
-                };
+                    };
+                }
+                return post;
             } catch (error) {
-                console.error('Error updating user data for post:', error, 'Post:', post);
-                return null;
+                console.error('Error updating user data for post:', error);
+                // Return original post if there's an error
+                return post;
             }
         }));
         
         // Safely serialize all posts and their nested data
         const safePosts = postsWithUpdatedUserData
-            .filter(post => post !== null) // Remove null posts
+            .filter(post => post && post.user) // Make sure we have valid posts with user data
             .map(post => serializeDocument(post))
             .filter((post): post is SafePost => post !== null);
         
@@ -201,9 +173,6 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
         
     } catch (error) {
         console.error('Error in getAllPosts:', error);
-        if (error instanceof Error) {
-            console.error('Error details:', error.message, error.stack);
-        }
         return [];
     }
 }
@@ -215,99 +184,48 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
     await connectDB();
     const userProfile = await User.findOne({ userId: user.id }).lean();
     
-    // If no profile exists, create one
-    if (!userProfile) {
-        const newUser = await User.create({
-            userId: user.id,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.emailAddresses?.[0]?.emailAddress || "",
-            profilePhoto: user.imageUrl || "/default-avatar.png",
-            description: "",
-            graduationYear: null
-        });
-        return {
-            userId: newUser.userId,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-            email: newUser.email,
-            profilePhoto: newUser.profilePhoto,
-            description: newUser.description,
-            graduationYear: newUser.graduationYear,
-        };
-    }
-    
-    // Return existing user profile data
     return {
-        userId: userProfile.userId,
-        firstName: userProfile.firstName,
-        lastName: userProfile.lastName,
-        email: userProfile.email,
-        profilePhoto: userProfile.profilePhoto || "/default-avatar.png",
-        description: userProfile.description || "",
-        graduationYear: userProfile.graduationYear,
+        userId: user.id,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.emailAddresses?.[0]?.emailAddress || "",
+        profilePhoto: user.imageUrl || "/default-avatar.png",
+        description: userProfile?.description || "",
+        graduationYear: userProfile?.graduationYear || null,
     };
 };
 
 // creating post using server actions
 export const createPostAction = async (inputText: string, selectedFile: string) => {
     try {
-        // Verify database connection
-        const connection = await connectDB();
-        if (!connection) {
-            throw new Error('Failed to connect to database');
-        }
-
-        // Verify user authentication
+        await connectDB();
         const user = await currentUser();
-        if (!user) {
-            throw new Error('User not authenticated');
-        }
-        if (!inputText) {
-            throw new Error('Input field is required');
-        }
+        if (!user) throw new Error('User not authenticated');
+        if (!inputText) throw new Error('Input field is required');
 
         // Get user data from database
         const userProfile = await User.findOne({ userId: user.id }).lean();
-        if (!userProfile) {
-            throw new Error('User profile not found');
-        }
+        if (!userProfile) throw new Error('User profile not found');
 
         // Create user object with data from both Clerk and our database
         const userObject = {
             userId: user.id,
-            firstName: user.firstName || userProfile.firstName || "",
-            lastName: user.lastName || userProfile.lastName || "",
-            email: user.emailAddresses?.[0]?.emailAddress || userProfile.email || "",
-            profilePhoto: user.imageUrl || userProfile.profilePhoto || "/default-avatar.png",
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.emailAddresses?.[0]?.emailAddress || "",
+            profilePhoto: user.imageUrl || "/default-avatar.png",
             description: userProfile.description || "",
             graduationYear: userProfile.graduationYear
         };
         
         let post;
-        if (selectedFile && selectedFile.startsWith('data:image')) {
-            // Verify Cloudinary configuration
-            if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
-                !process.env.CLOUDINARY_API_KEY || 
-                !process.env.CLOUDINARY_API_SECRET) {
-                throw new Error('Cloudinary configuration is missing');
-            }
-
-            try {
-                const uploadResponse = await cloudinary.uploader.upload(selectedFile, {
-                    folder: 'alumni-posts',
-                    resource_type: 'auto',
-                    timeout: 60000
-                });
-                post = await Post.create({
-                    description: inputText,
-                    user: userObject,
-                    imageUrl: uploadResponse.secure_url
-                });
-            } catch (uploadError) {
-                console.error('Cloudinary upload error:', uploadError);
-                throw new Error('Failed to upload image. Please try again.');
-            }
+        if (selectedFile) {
+            const uploadResponse = await cloudinary.uploader.upload(selectedFile);
+            post = await Post.create({
+                description: inputText,
+                user: userObject,
+                imageUrl: uploadResponse.secure_url
+            });
         } else {
             post = await Post.create({
                 description: inputText,
@@ -315,18 +233,11 @@ export const createPostAction = async (inputText: string, selectedFile: string) 
             });
         }
         
-        if (!post) {
-            throw new Error('Failed to create post');
-        }
-
         revalidatePath("/");
-        return { success: true, post };
+        return { success: true };
     } catch (error: any) {
         console.error('Error in createPostAction:', error);
-        if (error instanceof Error) {
-            console.error('Error details:', error.message, error.stack);
-        }
-        throw new Error(error.message || 'Failed to create post. Please try again.');
+        throw new Error(error.message || 'Failed to create post');
     }
 }
 
@@ -394,33 +305,30 @@ export const getAllUsers = async () => {
     }
 }
 
-// Get connected users (users with accepted connections)
+// Get connected users (for now, return all users except current user)
 export const getConnectedUsers = async () => {
     try {
         await connectDB();
         const user = await currentUser();
         if (!user) return [];
 
-        // Find all accepted connections for the current user
         const connections = await Connection.find({
             $or: [
                 { senderId: user.id },
                 { receiverId: user.id }
             ],
             status: 'accepted'
-        }).lean();
+        });
 
-        // Get the IDs of connected users
         const connectedUserIds = connections.map(conn => 
             conn.senderId === user.id ? conn.receiverId : conn.senderId
         );
 
-        // Fetch user details for all connected users
-        const connectedUsers = await User.find({
-            userId: { $in: connectedUserIds }
-        }).lean();
+        const users = await Post.find({
+            'user.userId': { $in: connectedUserIds }
+        }).distinct('user');
 
-        return JSON.parse(JSON.stringify(connectedUsers));
+        return JSON.parse(JSON.stringify(users));
     } catch (error) {
         console.error('Error fetching connected users:', error);
         return [];
@@ -431,35 +339,33 @@ export const getConnectedUsers = async () => {
 export const getUserById = async (userId: string) => {
     try {
         await connectDB();
-        const user = await User.findOne({ userId: userId }).lean();
-        if (!user) return null;
-        
-        // Calculate role based on graduation year if not already set
-        const currentYear = new Date().getFullYear();
-        const role = user.role || (user.graduationYear && user.graduationYear <= currentYear ? 'alumni' : 'student');
-        
-        return {
-            userId: user.userId,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            profilePhoto: user.profilePhoto || "/default-avatar.png",
-            description: user.description || "",
-            graduationYear: user.graduationYear,
-            role: role
-        };
+        const post = await Post.findOne({ 'user.userId': userId });
+        return post?.user || null;
     } catch (error) {
         console.error('Error fetching user:', error);
         return null;
     }
 }
 
-// Get messages between current user and another user
+// Get messages between users
 export const getMessages = async (otherUserId: string) => {
     try {
         await connectDB();
         const user = await currentUser();
         if (!user) throw new Error('Not authenticated');
+
+        // Check if users are connected
+        const connection = await Connection.findOne({
+            $or: [
+                { senderId: user.id, receiverId: otherUserId },
+                { senderId: otherUserId, receiverId: user.id }
+            ],
+            status: 'accepted'
+        });
+
+        if (!connection) {
+            throw new Error('Users are not connected');
+        }
 
         const messages = await Message.find({
             $or: [
@@ -483,7 +389,7 @@ export const sendMessage = async (receiverId: string, content: string) => {
         if (!sender) throw new Error('Not authenticated');
 
         // Check if users are connected
-        const connection = await ConnectionModel.findOne({
+        const connection = await Connection.findOne({
             $or: [
                 { senderId: sender.id, receiverId },
                 { senderId: receiverId, receiverId: sender.id }
@@ -515,12 +421,6 @@ export const sendConnectionRequest = async (receiverId: string) => {
         await connectDB();
         const sender = await currentUser();
         if (!sender) throw new Error('Not authenticated');
-        if (!sender.id) throw new Error('Invalid sender ID');
-        if (!receiverId) throw new Error('Invalid receiver ID');
-
-        // Validate that receiver exists
-        const receiver = await User.findOne({ userId: receiverId });
-        if (!receiver) throw new Error('Receiver not found');
 
         // Check if connection already exists
         const existingConnection = await Connection.findOne({
@@ -531,40 +431,20 @@ export const sendConnectionRequest = async (receiverId: string) => {
         });
 
         if (existingConnection) {
-            if (existingConnection.status === 'pending') {
-                throw new Error('Connection request already sent');
-            } else if (existingConnection.status === 'accepted') {
-                throw new Error('Already connected');
-            }
-            // If rejected, delete the old connection
-            await existingConnection.deleteOne();
+            throw new Error('Connection already exists');
         }
 
-        // Create new connection with validated data
-        const connection = new Connection({
+        await Connection.create({
             senderId: sender.id,
             receiverId,
             status: 'pending'
         });
 
-        // Validate before saving
-        await connection.validate();
-        
-        // Save the connection
-        await connection.save();
-
-        // Revalidate all relevant pages
-        revalidatePath('/');
         revalidatePath('/people');
         revalidatePath('/messages');
-        revalidatePath(`/messages/${receiverId}`);
-        
-        return { success: true, connectionId: connection._id.toString() };
+        return { success: true };
     } catch (error: any) {
         console.error('Error sending connection request:', error);
-        if (error.code === 11000) {
-            throw new Error('Connection request already exists');
-        }
         throw new Error(error.message || 'Failed to send connection request');
     }
 }
@@ -574,39 +454,25 @@ export const getConnectionRequests = async () => {
     try {
         await connectDB();
         const user = await currentUser();
-        if (!user || !user.id) return [];
+        if (!user) return [];
 
-        const requests: IConnection[] = await ConnectionModel.find({
+        const requests = await Connection.find({
             receiverId: user.id,
             status: 'pending'
-        }).sort({ createdAt: -1 }).lean();
+        }).sort({ createdAt: -1 });
 
-        // Get sender details for each request from User model
+        // Get sender details for each request
         const requestsWithUsers = await Promise.all(
-            requests.map(async (request: IConnection) => {
-                const sender = await User.findOne({ userId: request.senderId }).lean();
-                if (!sender) {
-                    // If sender not found, skip this request
-                    return null;
-                }
+            requests.map(async (request) => {
+                const senderPost = await Post.findOne({ 'user.userId': request.senderId });
                 return {
-                    ...request,
-                    _id: request._id.toString(), // Convert ObjectId to string
-                    sender: {
-                        userId: sender.userId,
-                        firstName: sender.firstName,
-                        lastName: sender.lastName,
-                        email: sender.email,
-                        profilePhoto: sender.profilePhoto || "/default-avatar.png",
-                        description: sender.description || "",
-                        graduationYear: sender.graduationYear
-                    }
+                    ...JSON.parse(JSON.stringify(request)),
+                    sender: senderPost?.user
                 };
             })
         );
 
-        // Filter out null values (requests with missing senders)
-        return requestsWithUsers.filter(Boolean);
+        return requestsWithUsers;
     } catch (error) {
         console.error('Error fetching connection requests:', error);
         return [];
@@ -618,26 +484,17 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
     try {
         await connectDB();
         const user = await currentUser();
-        if (!user || !user.id) throw new Error('Not authenticated');
+        if (!user) throw new Error('Not authenticated');
 
-        const connection = await ConnectionModel.findById(connectionId);
+        const connection = await Connection.findById(connectionId);
         if (!connection) throw new Error('Connection request not found');
         if (connection.receiverId !== user.id) throw new Error('Not authorized');
 
-        if (status === 'rejected') {
-            // If rejected, delete the connection
-            await connection.deleteOne();
-        } else {
-            // If accepted, update the status
-            connection.status = status;
-            await connection.save();
-        }
+        connection.status = status;
+        await connection.save();
 
-        // Revalidate all relevant pages
-        revalidatePath('/');
         revalidatePath('/people');
         revalidatePath('/messages');
-        revalidatePath(`/messages/${connection.senderId}`);
         return { success: true };
     } catch (error: any) {
         console.error('Error responding to connection request:', error);
@@ -645,14 +502,14 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
     }
 }
 
-// Get connection status between current user and another user
+// Check connection status between users
 export const getConnectionStatus = async (otherUserId: string) => {
     try {
         await connectDB();
         const user = await currentUser();
         if (!user) return null;
 
-        const connection = await ConnectionModel.findOne({
+        const connection = await Connection.findOne({
             $or: [
                 { senderId: user.id, receiverId: otherUserId },
                 { senderId: otherUserId, receiverId: user.id }
@@ -661,7 +518,7 @@ export const getConnectionStatus = async (otherUserId: string) => {
 
         return connection ? connection.status : null;
     } catch (error) {
-        console.error('Error getting connection status:', error);
+        console.error('Error checking connection status:', error);
         return null;
     }
 }
