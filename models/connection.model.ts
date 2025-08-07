@@ -25,36 +25,6 @@ const connectionSchema = new mongoose.Schema(
   }
 );
 
-// Drop old indexes and create new ones
-const initializeIndexes = async () => {
-  try {
-    const model = mongoose.model<IConnection>("Connection", connectionSchema);
-    const collection = model.collection;
-    
-    // Drop old indexes if they exist
-    try {
-      await collection.dropIndex('userId_1_peerId_1');
-    } catch (e) {
-      // Ignore error if index doesn't exist
-    }
-
-    // Create new compound index
-    await collection.createIndex(
-      { senderId: 1, receiverId: 1 },
-      { 
-        unique: true,
-        background: true,
-        name: 'unique_sender_receiver'
-      }
-    );
-
-    return model;
-  } catch (error) {
-    console.error('Error initializing indexes:', error);
-    throw error;
-  }
-};
-
 // Add a pre-save hook to validate the data
 connectionSchema.pre('save', function(next) {
   if (!this.senderId || !this.receiverId) {
@@ -77,19 +47,18 @@ export interface IConnection extends mongoose.Document {
 }
 
 // Initialize the model with proper indexes
-let Connection: Model<IConnection>;
-try {
-  // Try to get the existing model
-  Connection = mongoose.model<IConnection>("Connection");
-  // Initialize indexes for existing model
-  initializeIndexes().catch(console.error);
-} catch (error) {
-  // Model doesn't exist, create and initialize it
-  initializeIndexes()
-    .then(model => {
-      Connection = model;
-    })
-    .catch(console.error);
-}
+const Connection = mongoose.models.Connection || mongoose.model<IConnection>("Connection", connectionSchema);
+
+// Create indexes after model initialization
+Connection.collection.createIndex(
+  { senderId: 1, receiverId: 1 },
+  { 
+    unique: true,
+    background: true,
+    name: 'unique_sender_receiver'
+  }
+).catch(error => {
+  console.error('Error creating index:', error);
+});
 
 export { Connection }; 
