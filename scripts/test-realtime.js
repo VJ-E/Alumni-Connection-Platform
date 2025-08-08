@@ -3,7 +3,7 @@ const io = require('socket.io-client');
 const { v4: uuidv4 } = require('uuid');
 
 // Configuration - update these values
-const SOCKET_URL = 'http://localhost:3001';
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL;
 const USER1_ID = 'user1';
 const USER2_ID = 'user2';
 
