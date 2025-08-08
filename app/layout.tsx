@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Alumni Connect",
   description: "Alumni Connection Platform",
   icons: {
-    icon: "/favicon.png",
+    icon: "public/favicon.ico",
   },
 };
 
