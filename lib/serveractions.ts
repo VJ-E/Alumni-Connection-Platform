@@ -10,6 +10,7 @@ import connectDB from "./db";
 import { revalidatePath } from "next/cache";
 import { Comment, ICommentDocument } from "@/models/comment.model";
 import { Types } from "mongoose";
+import ConversationReadStatus from "@/models/ConversationReadStatus";
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -491,6 +492,98 @@ export async function sendMessage(receiverId: string, content: string, imageUrl?
     }
 }
 
+export const getLastMessageTimesForCurrentUser = async () => {
+    try {
+      await connectDB();
+      const user = await currentUser();
+      if (!user) return [];
+  
+      // Aggregation: latest message per conversation partner + read status lookup
+      const results = await Message.aggregate([
+        { $match: { $or: [{ senderId: user.id }, { receiverId: user.id }] } },
+        { $sort: { createdAt: -1 } },
+  
+        { // group by the other participant id
+          $group: {
+            _id: {
+              $cond: [{ $eq: ["$senderId", user.id] }, "$receiverId", "$senderId"]
+            },
+            lastMessageDate: { $first: "$createdAt" },
+            lastMessageContent: { $first: "$content" },
+            lastMessageImage: { $first: "$imageUrl" },
+            lastMessageSender: { $first: "$senderId" }
+          }
+        },
+  
+        // lookup read status for this conversation (for current user)
+        {
+          $lookup: {
+            from: "conversationreadstatuses", // collection name from model (lowercase, plural)
+            let: { partnerId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$userId", user.id] },          // statuses for current user
+                      { $eq: ["$partnerId", "$$partnerId"] } // partner relationship
+                    ]
+                  }
+                }
+              },
+              { $project: { lastReadAt: 1 } }
+            ],
+            as: "readStatus"
+          }
+        },
+  
+        // compute isUnread: last message was sent BY partner (not current user) AND lastMessageDate > lastReadAt
+        {
+          $addFields: {
+            isUnread: {
+              $and: [
+                { $ne: ["$lastMessageSender", user.id] }, // message not sent by current user
+                {
+                  $gt: [
+                    "$lastMessageDate",
+                    { $ifNull: [{ $arrayElemAt: ["$readStatus.lastReadAt", 0] }, new Date(0)] }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+  
+        {
+          $project: {
+            _id: 0,
+            userId: "$_id",
+            lastMessageDate: 1,
+            lastMessageContent: 1,
+            lastMessageImage: 1,
+            lastMessageSender: 1,
+            isUnread: 1
+          }
+        },
+  
+        { $sort: { lastMessageDate: -1 } }
+      ]);
+  
+      // Map to safe objects
+      return results.map((r: any) => ({
+        userId: r.userId as string,
+        lastMessageDate: r.lastMessageDate,
+        lastMessageContent: r.lastMessageContent ?? null,
+        lastMessageImage: r.lastMessageImage ?? null,
+        lastMessageSender: r.lastMessageSender ?? null,
+        isUnread: !!r.isUnread
+      }));
+    } catch (error) {
+      console.error("Error in getLastMessageTimesForCurrentUser:", error);
+      return [];
+    }
+  };
+  
 // Send connection request
 export const sendConnectionRequest = async (receiverId: string) => {
     try {

@@ -59,6 +59,7 @@ export default function ChatWindow({
   const [imageUploading, setImageUploading] = useState(false);
   const { socket, isConnected } = useSocket();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const [otherUserLastReadAt, setOtherUserLastReadAt] = useState<Date | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,11 +73,34 @@ export default function ChatWindow({
           getConnectionStatus(otherUser.userId),
           fetch(`/api/messages?receiverId=${otherUser.userId}`).then(res => res.json())
         ]);
-        
+  
         setConnectionStatus(status);
         if (Array.isArray(initialMessages)) {
           setMessages(initialMessages);
         }
+        // Fetch the other user's last read time
+        try {
+          const res = await fetch(`/api/messages/readStatus?partnerId=${otherUser.userId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.lastReadAt) {
+              setOtherUserLastReadAt(new Date(data.lastReadAt));
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to fetch other user's last read time:", err);
+        }
+        // Mark conversation as read on load
+        try {
+          await fetch("/api/messages/markAsRead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ partnerId: otherUser.userId })
+          });
+        } catch (err) {
+          console.warn("markAsRead failed:", err);
+        }
+  
       } catch (error) {
         console.error("Error initializing chat:", error);
         toast.error("Failed to load messages");
@@ -84,9 +108,10 @@ export default function ChatWindow({
         setLoading(false);
       }
     }
-
+  
     fetchInitialData();
   }, [otherUser.userId]);
+  
 
   // Socket event listeners
   useEffect(() => {
@@ -94,7 +119,6 @@ export default function ChatWindow({
 
     const handleNewMessage = (message: IMessage) => {
       setMessages(prev => {
-        // Prevent duplicate messages
         if (prev.some(m => m._id === message._id || 
             (m.senderId === message.senderId && 
              m.content === message.content && 
@@ -103,23 +127,45 @@ export default function ChatWindow({
         }
         return [...prev, message];
       });
+    
       scrollToBottom();
+      // If the incoming message is from the other user, mark conversation as read
+      if (message.senderId === otherUser.userId) {
+        fetch("/api/messages/markAsRead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ partnerId: otherUser.userId })
+        }).catch(e => console.warn("markAsRead error:", e));
+    }
+
     };
 
+    
+    
     const handleUserTyping = (data: { senderId: string; isTyping: boolean }) => {
       if (data.senderId === otherUser.userId) {
         setOtherUserTyping(data.isTyping);
       }
     };
+    
+    // ✅ Listen for read receipts
+    const handleReadReceipt = (data: { partnerId: string; lastReadAt: string }) => {
+      if (data.partnerId === otherUser.userId) {
+        setOtherUserLastReadAt(new Date(data.lastReadAt));
+      }
+    };
+    socket.on('readReceipt', handleReadReceipt);
+
 
     socket.on('newMessage', handleNewMessage);
     socket.on('messageConfirmed', handleNewMessage);
     socket.on('userTyping', handleUserTyping);
-
+    
     return () => {
       socket.off('newMessage', handleNewMessage);
       socket.off('messageConfirmed', handleNewMessage);
       socket.off('userTyping', handleUserTyping);
+      socket.off('readReceipt', handleReadReceipt); 
     };
   }, [socket, otherUser.userId]);
 
@@ -376,6 +422,14 @@ export default function ChatWindow({
                     minute: '2-digit',
                   })}
                 </p>
+                {message.senderId === currentUser.userId && index === messages.length - 1 && (
+                <p className="text-[10px] text-gray-400 mt-1 text-right">
+                  {otherUserLastReadAt &&
+                  new Date(message.createdAt) <= otherUserLastReadAt
+                    ? "Seen"
+                    : "Sent"}
+                </p>
+              )}
               </div>
             </div>
           );
