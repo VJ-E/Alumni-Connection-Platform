@@ -183,15 +183,16 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
     
     await connectDB();
     const userProfile = await User.findOne({ userId: user.id }).lean();
+    if (!userProfile) return null;
     
     return {
-        userId: user.id,
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.emailAddresses?.[0]?.emailAddress || "",
-        profilePhoto: user.imageUrl || "/default-avatar.png",
-        description: userProfile?.description || "",
-        graduationYear: userProfile?.graduationYear || null,
+        userId: userProfile.userId,
+        firstName: userProfile.firstName || "",
+        lastName: userProfile.lastName || "",
+        email: userProfile.email || "",
+        profilePhoto: userProfile.profilePhoto || "/default-avatar.png",
+        description: userProfile.description || "",
+        graduationYear: userProfile.graduationYear || null
     };
 };
 
@@ -203,20 +204,9 @@ export const createPostAction = async (inputText: string, selectedFile: string) 
         if (!user) throw new Error('User not authenticated');
         if (!inputText) throw new Error('Input field is required');
 
-        // Get user data from database
-        const userProfile = await User.findOne({ userId: user.id }).lean();
-        if (!userProfile) throw new Error('User profile not found');
-
-        // Create user object with data from both Clerk and our database
-        const userObject = {
-            userId: user.id,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.emailAddresses?.[0]?.emailAddress || "",
-            profilePhoto: user.imageUrl || "/default-avatar.png",
-            description: userProfile.description || "",
-            graduationYear: userProfile.graduationYear
-        };
+        // Get user data using the helper function
+        const userObject = await createSafeUserObject(user);
+        if (!userObject) throw new Error('User profile not found');
         
         let post;
         if (selectedFile) {
@@ -324,11 +314,22 @@ export const getConnectedUsers = async () => {
             conn.senderId === user.id ? conn.receiverId : conn.senderId
         );
 
-        const users = await Post.find({
-            'user.userId': { $in: connectedUserIds }
-        }).distinct('user');
+        const users = await User.find({
+            userId: { $in: connectedUserIds }
+        }).lean();
 
-        return JSON.parse(JSON.stringify(users));
+        // Transform user data to match expected format
+        const transformedUsers = users.map(user => ({
+            userId: user.userId,
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email || "",
+            profilePhoto: user.profilePhoto || "/default-avatar.png",
+            description: user.description || "",
+            graduationYear: user.graduationYear || null
+        }));
+
+        return JSON.parse(JSON.stringify(transformedUsers));
     } catch (error) {
         console.error('Error fetching connected users:', error);
         return [];
@@ -339,8 +340,18 @@ export const getConnectedUsers = async () => {
 export const getUserById = async (userId: string) => {
     try {
         await connectDB();
-        const post = await Post.findOne({ 'user.userId': userId });
-        return post?.user || null;
+        const user = await User.findOne({ userId }).lean();
+        if (!user) return null;
+        
+        return {
+            userId: user.userId,
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email || "",
+            profilePhoto: user.profilePhoto || "/default-avatar.png",
+            description: user.description || "",
+            graduationYear: user.graduationYear || null
+        };
     } catch (error) {
         console.error('Error fetching user:', error);
         return null;
@@ -464,10 +475,18 @@ export const getConnectionRequests = async () => {
         // Get sender details for each request
         const requestsWithUsers = await Promise.all(
             requests.map(async (request) => {
-                const senderPost = await Post.findOne({ 'user.userId': request.senderId });
+                const sender = await User.findOne({ userId: request.senderId }).lean();
                 return {
                     ...JSON.parse(JSON.stringify(request)),
-                    sender: senderPost?.user
+                    sender: sender ? {
+                        userId: sender.userId,
+                        firstName: sender.firstName || "",
+                        lastName: sender.lastName || "",
+                        email: sender.email || "",
+                        profilePhoto: sender.profilePhoto || "/default-avatar.png",
+                        description: sender.description || "",
+                        graduationYear: sender.graduationYear || null
+                    } : null
                 };
             })
         );
@@ -537,7 +556,7 @@ export const getUserProfile = async () => {
         let profile = await User.findOne({ userId: user.id });
         console.log('Existing profile:', profile);
 
-        // If profile doesn't exist, create it
+        // If profile doesn't exist, create it with Clerk data
         if (!profile) {
             console.log('Creating new profile for user:', user.id);
             const userData = {
@@ -547,7 +566,7 @@ export const getUserProfile = async () => {
                 email: user.emailAddresses[0]?.emailAddress || '',
                 profilePhoto: user.imageUrl || '/default-avatar.png',
                 description: '',
-                graduationYear: null
+                graduationYear: new Date().getFullYear() // Default to current year
             };
             console.log('New user data:', userData);
             
@@ -570,22 +589,7 @@ export const getUserProfile = async () => {
         return profileData;
     } catch (error) {
         console.error('Error in getUserProfile:', error);
-        // Return a default profile instead of throwing
-        const user = await currentUser();
-        if (!user) return null;
-        
-        return {
-            userId: user.id,
-            firstName: user.firstName || '',
-            lastName: user.lastName || '',
-            email: user.emailAddresses[0]?.emailAddress || '',
-            profilePhoto: user.imageUrl || '/default-avatar.png',
-            description: '',
-            graduationYear: null,
-            _id: 'temporary',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
+        throw new Error('Failed to get or create user profile');
     }
 }
 
