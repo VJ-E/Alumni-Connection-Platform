@@ -3,7 +3,7 @@ import mongoose, { Document, Model, Types } from "mongoose";
 export type Department = 'CSE(AI&ML)' | 'CSE' | 'CSBS' | 'AI&DS' | '';
 
 export interface IUser {
-  userId: string;
+  userId: string; // Keep as userId for compatibility
   email: string;
   firstName: string;
   lastName: string;
@@ -11,7 +11,7 @@ export interface IUser {
   description: string;
   graduationYear: number | null;
   department: Department;
-  // major: string;
+  major: string; // Added major field
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
@@ -27,7 +27,7 @@ export interface IUserDocument extends IUser, Document {
 }
 
 const userSchema = new mongoose.Schema<IUser>({
-  userId: {
+  userId: { // Keep as userId for compatibility
     type: String,
     required: true,
     unique: true,
@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema<IUser>({
     type: String,
     enum: ['CSE(AI&ML)', 'CSE', 'CSBS', 'AI&DS'],
     default: '',
+  },
+  major: { // Added major field
+    type: String,
+    default: "",
   },
   role: {
     type: String,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import NavbarWrapper from "@/components/NavbarWrapper";
+import OnboardingGuard from "@/components/OnboardingGuard";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next"
@@ -47,24 +48,26 @@ export default function RootLayout({
           >
             <SocketProvider>
               <NavbarWrapper />
-              <div className="flex-1 w-full pt-10 bg-background">
-                <main className="max-w-6xl mx-auto px-4">
-                  {children}
-                  <Toaster 
-                    position="top-right" 
-                    theme="system"
-                    toastOptions={{
-                      className: 'toast group',
-                      classNames: {
-                        toast: 'group-[.toast]:bg-background group-[.toast]:text-foreground group-[.toast]:border-border group-[.toast]:shadow-lg',
-                        description: 'group-[.toast]:text-muted-foreground',
-                        actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-                        cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
-                      },
-                    }}
-                  />
-                </main>
-              </div>
+              <OnboardingGuard>
+                <div className="flex-1 w-full pt-10 bg-background">
+                  <main className="max-w-6xl mx-auto px-4">
+                    {children}
+                    <Toaster 
+                      position="top-right" 
+                      theme="system"
+                      toastOptions={{
+                        className: 'toast group',
+                        classNames: {
+                          toast: 'group-[.toast]:bg-background group-[.toast]:text-foreground group-[.toast]:border-border group-[.toast]:shadow-lg',
+                          description: 'group-[.toast]:text-muted-foreground',
+                          actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+                          cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+                        },
+                      }}
+                    />
+                  </main>
+                </div>
+              </OnboardingGuard>
               <Analytics />
             </SocketProvider>
           </ThemeProvider>

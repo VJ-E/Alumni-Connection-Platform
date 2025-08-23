@@ -164,6 +164,7 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
                         email: post.user.email,
                         profilePhoto: post.user.profilePhoto,
                         department: post.user.department,
+                        major: post.user.major || userProfile.major || "", // Added major field
                         description: post.user.description || "",
                         graduationYear: userProfile.graduationYear,
                         linkedInUrl: userProfile.linkedInUrl || "",

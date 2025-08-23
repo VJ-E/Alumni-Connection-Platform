@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      userId: user.userId,
+      userId: user.userId, // Keep as userId for compatibility
       _id: user._id.toString(),
       firstName: user.firstName,
       lastName: user.lastName,
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
       description: user.description,
       graduationYear: user.graduationYear,
       department: user.department,
+      major: user.major, // Added major field
       role: role,
       linkedInUrl: user.linkedInUrl,
       githubUrl: user.githubUrl
@@ -68,31 +69,37 @@ export async function POST(req: NextRequest) {
       graduationYear, 
       department,
       major,
+      description,
+      linkedInUrl,
+      githubUrl,
       profilePhoto = '/default-avatar.png'
     } = body;
 
     // Validate required fields
-    if (!clerkId || !email || !firstName || !lastName || !graduationYear) {
+    if (!clerkId || !email || !firstName || !lastName || !graduationYear || !department) {
       return NextResponse.json(
-        { error: 'Missing required fields' }, 
+        { error: 'Missing required fields: clerkId, email, firstName, lastName, graduationYear, department are required' }, 
         { status: 400 }
       );
     }
 
     // Check if user already exists
-    let user = await User.findOne({ clerkId });
+    let user = await User.findOne({ userId: clerkId }); // Map clerkId to userId
     
     if (user) {
       // Update existing user
       const updatedUser = await User.findOneAndUpdate(
-        { clerkId },
+        { userId: clerkId }, // Map clerkId to userId
         {
           firstName,
           lastName,
           email,
           graduationYear: parseInt(graduationYear as string),
           department: department as Department,
-          major: major as string,
+          major: major || '',
+          description: description || '',
+          linkedInUrl: linkedInUrl || '',
+          githubUrl: githubUrl || '',
           profilePhoto,
           role: (parseInt(graduationYear as string) <= new Date().getFullYear() ? 'alumni' : 'student') as 'alumni' | 'student'
         },
@@ -106,14 +113,17 @@ export async function POST(req: NextRequest) {
     } else {
       // Create new user
       const newUser = new User({
-        userId: clerkId, // Using clerkId as userId
+        userId: clerkId, // Map clerkId to userId
         email,
         firstName,
         lastName,
         graduationYear: parseInt(graduationYear as string),
         department: department as Department,
+        major: major || '',
+        description: description || '',
+        linkedInUrl: linkedInUrl || '',
+        githubUrl: githubUrl || '',
         profilePhoto,
-        description: '',
         role: (parseInt(graduationYear as string) <= new Date().getFullYear() ? 'alumni' : 'student') as 'alumni' | 'student'
       });
       user = await newUser.save();
@@ -123,14 +133,18 @@ export async function POST(req: NextRequest) {
       success: true,
       user: {
         id: user._id,
-        userId: user.userId,
+        userId: user.userId, // Keep as userId for compatibility
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
         profilePhoto: user.profilePhoto,
         graduationYear: user.graduationYear,
-        department: user.department
+        department: user.department,
+        major: user.major, // Added major field
+        description: user.description,
+        linkedInUrl: user.linkedInUrl,
+        githubUrl: user.githubUrl
       }
     });
 

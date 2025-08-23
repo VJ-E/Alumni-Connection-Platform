@@ -9,6 +9,7 @@ export default authMiddleware({
     "/sign-up(.*)",
     "/api/webhook(.*)",
     "/api/uploadthing",
+    "/api/users/check-onboarding", // Allow onboarding check without auth
   ],
   ignoredRoutes: [
     "/api/webhook(.*)",
