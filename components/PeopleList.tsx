@@ -10,6 +10,7 @@ import { SearchIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { toast } from "react-toastify";
 import { Badge } from "./ui/badge";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 type UserType = 'all' | 'student' | 'alumni' | 'admin';
 
@@ -20,6 +21,7 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
   const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({});
   const [processingConnections, setProcessingConnections] = useState<Record<string, boolean>>({});
   const [selectedTab, setSelectedTab] = useState<UserType>('all');
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     async function fetchUsers() {
@@ -56,6 +58,12 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
   }, [currentUser?.id]);
 
   const handleConnect = async (userId: string) => {
+    // Check if user is online
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
+    
     setProcessingConnections(prev => ({ ...prev, [userId]: true }));
     try {
       await sendConnectionRequest(userId);

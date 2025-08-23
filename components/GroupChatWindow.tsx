@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { toast } from "react-toastify";
 import { Images } from "lucide-react";
 import { Button } from "./ui/button";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 interface GroupMessage {
   _id: string;
@@ -44,6 +45,7 @@ export default function GroupChatWindow({
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [isSending, setIsSending] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const isOnline = useOnlineStatus();
 
     useEffect(() => {
       if (!groupId) {
@@ -276,6 +278,12 @@ export default function GroupChatWindow({
   const sendMessage = async () => {
     // Don't send empty messages with no image
     if (!newMessage.trim() && !selectedImage) return;
+    
+    // Check if user is online
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
     
     try {
       setIsSending(true);

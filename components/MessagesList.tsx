@@ -13,6 +13,7 @@ import { useSocket } from "@/contexts/SocketContext";
 import CreateGroupModal from "@/components/CreateGroupModal";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 interface ConnectionRequest {
   _id: string;
@@ -51,6 +52,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
   const [activeTab, setActiveTab] = useState<MessageTab>('dms');
   const [processingRequests, setProcessingRequests] = useState<Record<string, boolean>>({});
   const { socket } = useSocket();
+  const isOnline = useOnlineStatus();
 
   const [lastMap, setLastMap] = useState<
     Record<string, { time: number; content?: string | null; imageUrl?: string | null; isUnread?: boolean }>
@@ -142,6 +144,12 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
   }, [socket, currentUser]);
 
   const handleConnectionResponse = async (connectionId: string, status: 'accepted' | 'rejected') => {
+    // Check if user is online
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
+    
     try {
       setProcessingRequests(prev => ({ ...prev, [connectionId]: true }));
       await respondToConnectionRequest(connectionId, status);
