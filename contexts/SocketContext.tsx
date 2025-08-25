@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 
 // Use dynamic import for socket.io-client to avoid type issues
@@ -24,9 +24,34 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { userId, isLoaded } = useAuth();
+  const socketRef = useRef<any>(null);
+  const connectionAttempts = useRef(0);
+  const maxConnectionAttempts = 3;
 
   useEffect(() => {
-    if (!isLoaded || !userId) return;
+    if (!isLoaded || !userId) {
+      // Clean up existing socket if user is not authenticated
+      if (socketRef.current) {
+        console.log('User not authenticated, cleaning up socket');
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
+
+    // Prevent multiple connections
+    if (socketRef.current && socketRef.current.connected) {
+      console.log('Socket already connected, skipping initialization');
+      return;
+    }
+
+    // Limit connection attempts
+    if (connectionAttempts.current >= maxConnectionAttempts) {
+      console.log('Max connection attempts reached, skipping socket connection');
+      return;
+    }
 
     // Socket.IO connection options
     const socketOptions = {
@@ -34,11 +59,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       transports: ['websocket', 'polling'],
       upgrade: true,
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
       timeout: 20000,
-      forceNew: true,
+      forceNew: false, // Changed to false to prevent multiple connections
       autoConnect: true,
       // Add secure flag for HTTPS
       secure: process.env.NODE_ENV === 'production',
@@ -64,10 +89,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     // Initialize socket connection with retry logic
     const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL!, socketOptions);
+    socketRef.current = socketInstance;
+    connectionAttempts.current++;
     
     // Set a unique connection ID for debugging
     const connectionId = `conn_${Date.now()}`;
-    console.log(`[${connectionId}] Initializing socket connection...`);
+    console.log(`[${connectionId}] Initializing socket connection... (Attempt ${connectionAttempts.current})`);
 
     // Debug logging
     console.log('Initializing socket connection to:', process.env.NEXT_PUBLIC_SOCKET_URL);
@@ -103,16 +130,16 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       console.log(`[${connectionId}] Disconnected from socket server. Reason:`, reason);
       setIsConnected(false);
       
-      // Attempt to reconnect if not explicitly disconnected
-      if (reason !== 'io client disconnect') {
-        console.log(`[${connectionId}] Attempting to reconnect...`);
-        // Use a small delay before attempting to reconnect
+      // Only attempt to reconnect if not explicitly disconnected and under max attempts
+      if (reason !== 'io client disconnect' && connectionAttempts.current < maxConnectionAttempts) {
+        console.log(`[${connectionId}] Attempting to reconnect... (${connectionAttempts.current}/${maxConnectionAttempts})`);
+        // Use a longer delay before attempting to reconnect
         setTimeout(() => {
-          if (!socketInstance.connected) {
+          if (!socketInstance.connected && connectionAttempts.current < maxConnectionAttempts) {
             console.log(`[${connectionId}] Manually reconnecting...`);
             socketInstance.connect();
           }
-        }, 1000);
+        }, 3000);
       }
     };
 
