@@ -1,10 +1,10 @@
 import { authMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 // This example protects all routes including api/trpc routes
 // Please edit this to allow other routes to be public as needed.
 export default authMiddleware({
   publicRoutes: [
-    "/",
     "/sign-in(.*)",
     "/sign-up(.*)",
     "/api/webhook(.*)",
@@ -28,15 +28,18 @@ export default authMiddleware({
     "/LinkedIn_icon.svg.png",
     "/LinkedIn_logo.png",
   ],
-  // Add afterAuth to handle authentication flow better
+  // Redirect signed-in users away from auth pages; enforce sign-in on protected routes
   afterAuth(auth, req) {
-    // Handle authentication flow
-    if (!auth.userId && !auth.isPublicRoute) {
-      // Redirect to sign-in for protected routes
-      return;
+    const url = req.nextUrl;
+    const pathname = url.pathname;
+
+    // If user is signed in and visiting auth routes, send to home
+    if (auth.userId && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+      const redirectUrl = new URL('/', req.url);
+      return NextResponse.redirect(redirectUrl);
     }
-    
-    // Allow the request to proceed
+
+    // If not signed in and route is protected, Clerk will handle 401 → redirect via publicRoutes
     return;
   }
 });

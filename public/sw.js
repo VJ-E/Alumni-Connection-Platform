@@ -1,10 +1,9 @@
-const CACHE_NAME = 'alumni-connection-v1.0.0';
-const STATIC_CACHE = 'static-v1.0.0';
-const DYNAMIC_CACHE = 'dynamic-v1.0.0';
+const CACHE_NAME = 'alumni-connection-v1.0.1';
+const STATIC_CACHE = 'static-v1.0.1';
+const DYNAMIC_CACHE = 'dynamic-v1.0.1';
 
 // Files to cache immediately
 const STATIC_FILES = [
-  '/',
   '/manifest.json',
   '/offline.html',
   '/kit_logo.png',
@@ -70,35 +69,35 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle different types of requests
+  // Only cache static asset GET requests. Let network handle pages and APIs.
   if (request.method === 'GET') {
-    // Static assets
-    if (request.destination === 'image' || 
-        request.destination === 'font' || 
-        request.destination === 'style' ||
-        request.destination === 'script') {
+    // Never intercept app navigations or auth/API routes
+    if (
+      request.mode === 'navigate' ||
+      url.pathname.startsWith('/sign-in') ||
+      url.pathname.startsWith('/sign-up') ||
+      url.pathname.startsWith('/api/') ||
+      url.pathname.startsWith('/api/auth')
+    ) {
+      return;
+    }
+
+    if (
+      request.destination === 'image' ||
+      request.destination === 'font' ||
+      request.destination === 'style' ||
+      request.destination === 'script'
+    ) {
       event.respondWith(serveFromCache(request, STATIC_CACHE));
       return;
     }
 
-    // API requests
-    if (url.pathname.startsWith('/api/')) {
-      event.respondWith(serveApiWithCache(request));
-      return;
-    }
-
-    // Navigation requests (pages)
-    if (request.mode === 'navigate') {
-      event.respondWith(servePageWithCache(request));
-      return;
-    }
-
-    // Other requests
-    event.respondWith(serveFromCache(request, STATIC_CACHE));
-  } else {
-    // Non-GET requests (POST, PUT, DELETE)
-    event.respondWith(handleNonGetRequest(request));
+    // Fallback to network for everything else
+    return;
   }
+
+  // Non-GET: let the network handle
+  return;
 });
 
 // Serve static files from cache
@@ -169,6 +168,12 @@ async function servePageWithCache(request) {
     // Try network first
     const networkResponse = await fetch(request);
     
+    // If the response is a redirect, do not cache, just pass it through
+    const isRedirect = networkResponse.type === 'opaqueredirect' || (networkResponse.status >= 300 && networkResponse.status < 400);
+    if (isRedirect) {
+      return networkResponse;
+    }
+
     if (networkResponse.ok) {
       // Cache successful page responses
       const responseClone = networkResponse.clone();

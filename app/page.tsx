@@ -2,7 +2,6 @@ import Feed from "@/components/Feed";
 import News from "@/components/News";
 import Sidebar from "@/components/Sidebar";
 import { currentUser } from "@clerk/nextjs/server";
-// import { redirect } from "next/dist/server/api-utils";
 import { redirect } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,7 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 export default async function Home() {
   const user = await currentUser();
   
-  if(!user){
+  if (!user) {
     redirect("/sign-in");
   }
 
