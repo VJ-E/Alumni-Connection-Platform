@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react"
-import { useSession } from "next-auth/react"
+import { useUser } from "@clerk/nextjs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
+import { toast } from "react-toastify"
 
 interface Event {
   title: string
@@ -14,9 +15,11 @@ interface Event {
   date: string
   startTime: string
   endTime: string
+  link?: string
   createdBy: {
     name: string
     email: string
+    userId: string
   }
 }
 
@@ -33,16 +36,21 @@ export default function AddEventDialog({
   selectedDate,
   onEventAdded
 }: AddEventDialogProps) {
-  const { data: session } = useSession()
+  const { user } = useUser()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
+  const [link, setLink] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!session?.user?.name || !session?.user?.email || !selectedDate) return
+    if (!user?.firstName || !user?.emailAddresses?.[0]?.emailAddress || !selectedDate) {
+      toast.error("Missing required user information")
+      return
+    }
 
     const newEvent: Event = {
       title,
@@ -50,13 +58,16 @@ export default function AddEventDialog({
       date: format(selectedDate, 'yyyy-MM-dd'),
       startTime,
       endTime,
+      link: link || undefined,
       createdBy: {
-        name: session.user.name,
-        email: session.user.email
+        name: `${user.firstName} ${user.lastName || ''}`.trim(),
+        email: user.emailAddresses[0].emailAddress,
+        userId: user.id
       }
     }
 
     try {
+      setIsSubmitting(true)
       const response = await fetch('/api/opportunities', {
         method: 'POST',
         headers: {
@@ -65,21 +76,30 @@ export default function AddEventDialog({
         body: JSON.stringify(newEvent),
       })
 
-      if (response.ok) {
-        onEventAdded(newEvent)
-        setTitle("")
-        setDescription("")
-        setStartTime("")
-        setEndTime("")
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to create event')
       }
+
+      onEventAdded(newEvent)
+      setTitle("")
+      setDescription("")
+      setStartTime("")
+      setEndTime("")
+      setLink("")
+      toast.success("Event created successfully!")
+      onOpenChange(false)
     } catch (error) {
       console.error('Error creating event:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to create event')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-gray-900 text-white">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Event</DialogTitle>
         </DialogHeader>
@@ -92,7 +112,7 @@ export default function AddEventDialog({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-gray-800 border-gray-700"
+              placeholder="Event title"
               required
             />
           </div>
@@ -104,7 +124,7 @@ export default function AddEventDialog({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="bg-gray-800 border-gray-700"
+              placeholder="Event description"
               required
             />
           </div>
@@ -118,7 +138,6 @@ export default function AddEventDialog({
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="bg-gray-800 border-gray-700"
                 required
               />
             </div>
@@ -131,14 +150,29 @@ export default function AddEventDialog({
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="bg-gray-800 border-gray-700"
                 required
               />
             </div>
           </div>
+          <div className="space-y-2">
+            <label htmlFor="link" className="text-sm font-medium">
+              Application Link
+            </label>
+            <Input
+              id="link"
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
           <div className="flex justify-end">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Add Event
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isSubmitting ? "Creating..." : "Add Event"}
             </Button>
           </div>
         </form>
