@@ -46,16 +46,20 @@ interface SafePost {
 
 const PostContent = ({ post }: { post: SafePost }) => {
   return (
-    <div className="px-4 pb-2">
-      <p className="text-sm text-foreground" dangerouslySetInnerHTML={{ __html: linkify(post.description) }}/>
+    <div className="mt-2">
+      <div className="text-sm text-foreground break-words" dangerouslySetInnerHTML={{ __html: linkify(post.description) }} />
       {post.imageUrl && (
-        <div className="relative w-full h-96 mt-2">
-          <Image
-            src={post.imageUrl}
-            alt="Post image"
-            fill
-            className="object-contain"
-          />
+        <div className="relative w-full mt-3 rounded-lg overflow-hidden border border-border">
+          <div className="relative w-full aspect-video">
+            <Image
+              src={post.imageUrl}
+              alt="Post image"
+              fill
+              className="object-contain bg-card"
+              sizes="(max-width: 768px) 100vw, 768px"
+              priority={false}
+            />
+          </div>
         </div>
       )}
     </div>

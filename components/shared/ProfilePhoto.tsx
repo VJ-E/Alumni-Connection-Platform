@@ -3,9 +3,16 @@ import React from 'react'
 import { Avatar, AvatarImage } from '../ui/avatar'
 import Link from 'next/link'
 
-const ProfilePhoto = ({ src, alt = "Profile photo", userId }: { src: string; alt?: string; userId?: string }) => {
+interface ProfilePhotoProps {
+    src: string;
+    alt?: string;
+    userId?: string;
+    className?: string;
+}
+
+const ProfilePhoto = ({ src, alt = "Profile photo", userId, className = '' }: ProfilePhotoProps) => {
     const avatar = (
-            <Avatar className='cursor-pointer hover:ring-2 hover:ring-ring transition-all'>
+            <Avatar className={`cursor-pointer hover:ring-2 hover:ring-ring transition-all ${className}`.trim()}>
                 <AvatarImage 
                     src={src} 
                     alt={alt}

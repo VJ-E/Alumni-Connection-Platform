@@ -82,28 +82,40 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
 
   return (
     <div className="border-t border-border">
-      <div className="flex items-center gap-4 p-2">
+      <div className="flex items-center justify-around py-1 sm:py-2 px-1 sm:px-2">
         <Button
           onClick={handleLike}
           variant="ghost"
           size="sm"
           disabled={isLoading}
-          className={`flex items-center gap-2 ${isLiked ? 'text-destructive' : 'text-muted-foreground'}`}
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-1.5 px-2 sm:px-3 rounded-lg transition-colors ${
+            isLiked 
+              ? 'text-destructive hover:bg-destructive/10' 
+              : 'text-muted-foreground hover:bg-muted/50'
+          }`}
         >
-          <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-          <span>{likeCount}</span>
+          <Heart className={`w-5 h-5 sm:w-4 sm:h-4 ${isLiked ? 'fill-current' : ''}`} />
+          <span className="text-sm font-medium">{likeCount}</span>
         </Button>
         <Button
           onClick={() => setShowComments(!showComments)}
           variant="ghost"
           size="sm"
-          className="flex items-center gap-2 text-muted-foreground"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-1.5 px-2 sm:px-3 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors"
         >
-          <MessageCircle className="w-5 h-5" />
-          <span>{post.comments?.length || 0}</span>
+          <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4" />
+          <span className="text-sm font-medium">
+            <span className="hidden sm:inline"> </span>
+            {post.comments?.length || 0}
+            <span className="hidden sm:inline"> Comments</span>
+          </span>
         </Button>
       </div>
-      {showComments && <Comments post={post} />}
+      {showComments && (
+        <div className="border-t border-border bg-muted/5">
+          <Comments postId={post._id} initialComments={post.comments || []} />
+        </div>
+      )}
     </div>
   );
 };

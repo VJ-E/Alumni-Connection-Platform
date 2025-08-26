@@ -30,8 +30,8 @@ const Navbar = () => {
   useEffect(() => { setMounted(true); }, []);
   return (
     <>
-      <div className="fixed w-full bg-background z-50 shadow-sm border-b border-border">
-        <div className="flex items-center max-w-6xl justify-between h-14 mx-auto px-3">
+      <div className="fixed w-full bg-background/95 backdrop-blur-sm z-50 shadow-sm border-b border-border">
+        <div className="flex items-center max-w-6xl justify-between h-14 mx-auto px-3 sm:px-4">
           {/* Logo & Search */}
           <div className="flex items-center gap-2">
             <Image
@@ -40,14 +40,14 @@ const Navbar = () => {
               width={50}
               height={50}
             />
-            <h1 className="text-2xl font-bold hidden md:block text-foreground">Alumni Connection</h1>
+            <h1 className="text-xl sm:text-2xl font-bold hidden md:block text-foreground whitespace-nowrap">Alumni Connection</h1>
             {/* <div className="hidden md:block">
               <SearchInput />
             </div> */}
           </div>
 
           {/* Desktop Nav + Profile */}
-          <div className="hidden md:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-3 sm:gap-5">
             <NavItems />
             {/* Theme toggle button - only render after mount to avoid hydration mismatch */}
             {mounted && (

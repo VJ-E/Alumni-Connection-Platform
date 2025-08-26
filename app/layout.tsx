@@ -21,12 +21,12 @@ const MemoizedPWAInstaller = React.memo(PWAInstaller);
 const MemoizedOfflineIndicator = React.memo(OfflineIndicator);
 
 export const metadata: Metadata = {
-  title: "Alumni Connect",
+  title: "Alumni Connection",
   description: "Connect with alumni, share opportunities, and stay updated with your network. A Progressive Web App for seamless alumni networking.",
   keywords: ["alumni", "networking", "connections", "opportunities", "social platform"],
-  authors: [{ name: "Alumni Connection Platform" }],
-  creator: "Alumni Connection Platform",
-  publisher: "Alumni Connection Platform",
+  authors: [{ name: "Alumni Connection" }],
+  creator: "Alumni Connection",
+  publisher: "Alumni Connection",
   formatDetection: {
     email: false,
     address: false,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "Alumni Connect",
+    title: "Alumni Connection",
     description: "Connect with alumni, share opportunities, and stay updated with your network",
     url: 'https://alumni-connection-platform.vercel.app',
     siteName: 'Alumni Connection Platform',
@@ -72,9 +72,10 @@ export const metadata: Metadata = {
   viewport: {
     width: 'device-width',
     initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    maximumScale: 5,
+    userScalable: true,
     viewportFit: 'cover',
+    interactiveWidget: 'resizes-visual',
   },
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
@@ -103,7 +104,7 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'Alumni Connect',
+    'apple-mobile-web-app-title': 'Alumni Connection',
     'msapplication-TileColor': '#000000',
     'msapplication-config': '/browserconfig.xml',
   },
@@ -128,8 +129,8 @@ export default function RootLayout({
         }
       }}
     >
-      <html lang="en">
-        <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <html lang="en" className="h-full">
+        <body className={`${inter.className} min-h-screen flex flex-col safe-area-inset`}>
           <ThemeProvider 
             attribute="class" 
             defaultTheme="light" 
@@ -139,8 +140,8 @@ export default function RootLayout({
             <SocketProvider>
               <MemoizedNavbarWrapper />
               <MemoizedOnboardingGuard>
-                <div className="flex-1 w-full pt-10 pb-20 md:pb-0 bg-background">
-                  <main className="max-w-6xl mx-auto px-4">
+                <div className="flex-1 w-full pt-14 md:pt-10 pb-24 md:pb-0 bg-background">
+                  <main className="max-w-6xl mx-auto px-2 sm:px-4 w-full">
                     {children}
                     <Toaster 
                       position="top-right" 

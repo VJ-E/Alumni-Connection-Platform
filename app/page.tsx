@@ -24,8 +24,8 @@ export default async function Home() {
   } : null;
    
   return (
-    <div className="pt-20 min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto flex justify-between gap-8 px-4">
+    <div className="pt-14 md:pt-20 min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto w-full px-2 sm:px-4">
         <Feed user={userData}/>
       </div>
       <ToastContainer 

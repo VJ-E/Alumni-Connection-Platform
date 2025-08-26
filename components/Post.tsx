@@ -64,51 +64,59 @@ const Post = ({ post }: { post: SafePost }) => {
   }
   // console.log("role--------------------------", role,fullName);
   return (
-    <div className="bg-card text-card-foreground my-2 mx-2 md:mx-0 rounded-lg border border-border">
-      <div className="flex gap-2 p-4">
-        <ProfilePhoto src={post.user.profilePhoto} userId={post.user.userId} />
-        <div className="flex items-center justify-between w-full">
-          <div>
-            <h1 className="text-sm font-bold flex items-center">
-              {fullName}
-              <Badge variant={"secondary"} className="ml-2">
-                {post.user.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
-              </Badge>
-              {loggedInUser && (
-                <Badge variant={"outline"} className="ml-2">
-                  You
-                </Badge>
-              )}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {typeof post.user.graduationYear === 'number' ? `Batch of ${post.user.graduationYear}` : 'Graduation year not set'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              <ReactTimeago date={post.createdAt} />
-            </p>
-          </div>
+    <div className="bg-card text-card-foreground my-2 rounded-lg border border-border overflow-hidden">
+      <div className="flex gap-3 p-3 sm:p-4">
+        <div className="flex-shrink-0">
+          <ProfilePhoto src={post.user.profilePhoto} userId={post.user.userId} className="h-10 w-10 sm:h-12 sm:w-12" />
         </div>
-        <div>
-          {(loggedInUser || currentUser?.profile?.role === 'admin') && (
-            <Button
-              onClick={() => {
-                if (!isOnline) {
-                  toast.error("You are offline. Please check your connection and try again.");
-                  return;
-                }
-                deletePostAction(post._id);
-              }}
-              size={"icon"}
-              className="rounded-full"
-              variant={"outline"}
-            >
-              <Trash2 />
-            </Button>
-          )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                <h1 className="text-sm font-bold truncate">
+                  {fullName}
+                </h1>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Badge variant={"secondary"} className="text-[10px] sm:text-xs h-4">
+                    {post.user.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
+                  </Badge>
+                  {loggedInUser && (
+                    <Badge variant={"outline"} className="text-[10px] sm:text-xs h-4">
+                      You
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                {typeof post.user.graduationYear === 'number' ? `Batch of ${post.user.graduationYear}` : 'Graduation year not set'}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                <ReactTimeago date={post.createdAt} />
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              {(loggedInUser || currentUser?.profile?.role === 'admin') && (
+                <Button
+                  onClick={() => {
+                    if (!isOnline) {
+                      toast.error("You are offline. Please check your connection and try again.");
+                      return;
+                    }
+                    deletePostAction(post._id);
+                  }}
+                  variant={"ghost"}
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+          <PostContent post={post} />
+          <SocialOptions post={post} />
         </div>
       </div>
-      <PostContent post={post} />
-      <SocialOptions post={post} />
     </div>
   );
 };

@@ -25,16 +25,16 @@ export default function MobileBottomNav() {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg z-50 safe-area-inset-bottom">
-      <div className="flex items-center justify-between px-6 py-3">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg z-40 safe-area-inset-bottom">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3">
         {/* Left side - People and Opportunities */}
         <div className="flex items-center gap-6">
           <Link
             href="/people"
-            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-200 min-w-[60px] touch-manipulation ${
+            className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-all duration-200 min-w-[56px] touch-manipulation active:scale-95 ${
               isActive("/people")
-                ? "text-primary scale-110 bg-primary/10"
-                : "text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95"
+                ? "text-primary scale-105 bg-primary/10"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Users className="h-6 w-6 mb-1" />
@@ -43,10 +43,10 @@ export default function MobileBottomNav() {
           
           <Link
             href="/opportunities"
-            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-200 min-w-[60px] touch-manipulation ${
+            className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-all duration-200 min-w-[56px] touch-manipulation active:scale-95 ${
               isActive("/opportunities")
-                ? "text-primary scale-110 bg-primary/10"
-                : "text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95"
+                ? "text-primary scale-105 bg-primary/10"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Briefcase className="h-6 w-6 mb-1" />
@@ -57,10 +57,10 @@ export default function MobileBottomNav() {
         {/* Center - Home */}
         <Link
           href="/"
-          className={`flex flex-col items-center p-3 rounded-xl transition-all duration-200 min-w-[60px] touch-manipulation ${
+          className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-all duration-200 min-w-[56px] touch-manipulation active:scale-95 ${
             isActive("/")
-              ? "text-primary scale-110 bg-primary/10"
-              : "text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95"
+              ? "text-primary scale-105 bg-primary/10"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Home className="h-7 w-7 mb-1" />
@@ -71,10 +71,10 @@ export default function MobileBottomNav() {
         <div className="flex items-center gap-6">
           <Link
             href="/messages"
-            className={`flex flex-col items-center p-3 rounded-xl transition-all duration-200 min-w-[60px] touch-manipulation ${
+            className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-all duration-200 min-w-[56px] touch-manipulation active:scale-95 ${
               pathname.startsWith("/messages")
-                ? "text-primary scale-110 bg-primary/10"
-                : "text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95"
+                ? "text-primary scale-105 bg-primary/10"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <MessageSquare className="h-6 w-6 mb-1" />
@@ -86,13 +86,13 @@ export default function MobileBottomNav() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={`flex flex-col items-center p-3 h-auto min-w-[60px] transition-all duration-200 touch-manipulation ${
+                  className={`flex flex-col items-center p-2 sm:p-3 h-auto min-w-[56px] transition-all duration-200 touch-manipulation active:scale-95 ${
                     pathname.startsWith("/profile")
-                      ? "text-primary scale-110 bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95"
+                      ? "text-primary scale-105 bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <div className="relative h-6 w-6 rounded-full mb-1">
+                  <div className="relative h-6 w-6 rounded-full mb-0.5 sm:mb-1">
                     <Image
                       src={profile?.profilePhoto || "/default-avatar.png"}
                       alt="Profile"
