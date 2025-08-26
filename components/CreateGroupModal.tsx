@@ -45,7 +45,12 @@ async function uploadGroupImage(base64Image: string): Promise<string> {
   }
 }
 
-export default function CreateGroupModal({ onGroupCreated }: { onGroupCreated: () => void }) {
+interface CreateGroupModalProps {
+  onGroupCreated: () => void;
+  children: React.ReactNode;
+}
+
+export default function CreateGroupModal({ onGroupCreated, children }: CreateGroupModalProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -178,7 +183,7 @@ export default function CreateGroupModal({ onGroupCreated }: { onGroupCreated: (
       }
     }}>
       <DialogTrigger asChild>
-        <Button className="ml-auto">Create Group</Button>
+        {children}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
