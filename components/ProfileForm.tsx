@@ -72,28 +72,47 @@ export default function ProfileForm({ initialData, readOnly = false }: { initial
 
   if (!isEditing) {
     return (
-      <div className="bg-card text-card-foreground rounded-lg border border-border p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative h-24 w-24">
+      <div className="bg-card text-card-foreground rounded-lg border border-border p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start gap-4 w-full sm:w-auto">
+            <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0">
               <Image
                 src={initialData.profilePhoto || "/default-avatar.png"}
                 alt="Profile"
                 fill
                 className="rounded-full object-cover"
+                priority
               />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold">
-                {initialData.firstName} {initialData.lastName}
-              </h2>
-              <p className="text-muted-foreground">{initialData.department || ''}</p>
-              <p className="text-muted-foreground">Batch of {initialData.graduationYear}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 sm:gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold truncate">
+                  {initialData.firstName} {initialData.lastName}
+                </h2>
+                {!readOnly && (
+                  <Button 
+                    onClick={() => setIsEditing(true)} 
+                    size="sm"
+                    className="w-full sm:w-auto mt-2 sm:mt-0"
+                  >
+                    Edit Profile
+                  </Button>
+                )}
+              </div>
+              <div className="mt-2 space-y-1">
+                {initialData.department && (
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    {initialData.department}
+                  </p>
+                )}
+                {initialData.graduationYear && (
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    Batch of {initialData.graduationYear}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-          {!readOnly && (
-          <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
-          )}
         </div>
 
         <div className="space-y-4">

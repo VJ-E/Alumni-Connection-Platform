@@ -111,13 +111,17 @@ const Feed = ({ user }: { user: SafeUser | null }) => {
     }
 
     return (
-        <div className='flex-1 w-full'>
+        <div className='flex-1 w-full px-2 sm:px-4'>
             <div className='max-w-2xl mx-auto w-full'>
-                <PostInput />
+                <div className="sticky top-[4rem] z-10 bg-background/80 backdrop-blur-sm pb-2 -mx-2 sm:mx-0 px-2 sm:px-0">
+                    <PostInput />
+                </div>
                 {loading ? (
                     <div className="text-center py-6 text-foreground">Loading posts...</div>
                 ) : (
-                    <Posts posts={posts} />
+                    <div className="mt-2">
+                        <Posts posts={posts} />
+                    </div>
                 )}
             </div>
         </div>
