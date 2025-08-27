@@ -6,8 +6,34 @@ import { IUser } from "@/models/user.model";
 import ProfilePhoto from "./shared/ProfilePhoto";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { getConnectionStatus, getMessages, sendMessage } from "@/lib/serveractions";
+import { getConnectionStatus, getMessages, sendMessage, uploadChatImage } from "@/lib/serveractions";
 import { toast } from "react-toastify";
+import { Images } from "lucide-react";
+import Image from "next/image";
+
+// Helper function to convert URLs to clickable links
+const convertUrlsToLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a 
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-200 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
 
 export default function ChatWindow({
   currentUser,
@@ -21,6 +47,7 @@ export default function ChatWindow({
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,7 +71,6 @@ export default function ChatWindow({
     }
 
     fetchData();
-    // Poll for new messages every 5 seconds
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [otherUser.userId]);
@@ -52,6 +78,56 @@ export default function ChatWindow({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle image file selection
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      toast.info("Uploading image...");
+
+      // Convert file to base64
+      const reader = new FileReader();
+      const imageDataPromise = new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const imageData = await imageDataPromise;
+      console.log("Starting image upload to Cloudinary...");
+      const imageUrl = await uploadChatImage(imageData as string);
+
+      console.log("Image uploaded successfully, sending message...");
+      const message = await sendMessage(otherUser.userId, "", imageUrl);
+      
+      if (message) {
+        console.log("Message with image sent successfully");
+        setMessages((prev) => [...prev, message]);
+        toast.success("Image sent successfully");
+      }
+    } catch (error) {
+      console.error("Error in image upload/send:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send image. Please try again.");
+    } finally {
+      setImageUploading(false);
+      e.target.value = ""; // Clear the input
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +176,7 @@ export default function ChatWindow({
         <div className="space-y-4">
           {messages.map((message) => (
             <div
-              key={message._id}
+              key={message._id as string}
               className={`flex ${
                 message.senderId === currentUser.userId ? "justify-end" : "justify-start"
               }`}
@@ -112,7 +188,20 @@ export default function ChatWindow({
                     : "bg-gray-100"
                 }`}
               >
-                <p>{message.content}</p>
+                {message.imageUrl && (
+                  <div className="mb-2">
+                    <Image
+                      src={message.imageUrl}
+                      alt="Sent image"
+                      width={0}
+                      height={0}
+                      sizes="(max-width: 768px) 85vw, (max-width: 1200px) 60vw, 40vw"
+                      className="rounded w-auto h-auto max-w-full"
+                      style={{ maxHeight: '60vh' }}
+                    />
+                  </div>
+                )}
+                {message.content && <p className="break-words">{convertUrlsToLinks(message.content)}</p>}
                 <p className="text-xs mt-1 opacity-70">
                   {new Date(message.createdAt).toLocaleTimeString()}
                 </p>
@@ -124,7 +213,7 @@ export default function ChatWindow({
       </div>
 
       <form onSubmit={handleSendMessage} className="p-4 border-t">
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 items-end">
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -132,11 +221,24 @@ export default function ChatWindow({
             className="flex-1"
             rows={1}
           />
-          <Button type="submit" disabled={!newMessage.trim()}>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+              disabled={imageUploading}
+            />
+            <Images className={`w-6 h-6 ${imageUploading ? 'text-gray-400' : 'text-gray-500 hover:text-blue-500'}`} />
+          </label>
+          <Button type="submit" disabled={!newMessage.trim() || imageUploading}>
             Send
           </Button>
         </div>
+        {imageUploading && (
+          <p className="text-sm text-blue-500 mt-1">Uploading image...</p>
+        )}
       </form>
     </div>
   );
-} 
+}
