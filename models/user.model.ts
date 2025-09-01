@@ -53,13 +53,58 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   },
 }, { timestamps: true });
 
-// Add a pre-save middleware to automatically set role based on graduation year
+// Function to determine role based on graduation year
+function determineRole(graduationYear: number | null): 'student' | 'alumni' {
+  if (!graduationYear) return 'student';
+  const currentYear = new Date().getFullYear();
+  return graduationYear <= currentYear ? 'alumni' : 'student';
+}
+
+// Add middleware to set role based on graduation year before saving
 userSchema.pre('save', function(next) {
   if (this.graduationYear) {
-    const currentYear = new Date().getFullYear();
-    this.role = this.graduationYear <= currentYear ? 'alumni' : 'student';
+    this.role = determineRole(this.graduationYear);
   }
   next();
+});
+
+// Add middleware for findOneAndUpdate
+userSchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate() as any;
+  if (update?.graduationYear) {
+    update.role = determineRole(update.graduationYear);
+  }
+  next();
+});
+
+// Add middleware for find operations to ensure role is always up to date
+userSchema.post('find', async function(docs) {
+  if (!Array.isArray(docs)) return;
+  
+  const currentYear = new Date().getFullYear();
+  const updates = docs.map(doc => {
+    if (!doc.graduationYear) return null;
+    
+    const calculatedRole = determineRole(doc.graduationYear);
+    if (doc.role !== calculatedRole) {
+      return User.findByIdAndUpdate(doc._id, { role: calculatedRole });
+    }
+    return null;
+  }).filter(Boolean);
+  
+  if (updates.length > 0) {
+    await Promise.all(updates);
+  }
+});
+
+// Add middleware for findOne operations
+userSchema.post('findOne', async function(doc) {
+  if (!doc) return;
+  
+  const calculatedRole = determineRole(doc.graduationYear);
+  if (doc.role !== calculatedRole) {
+    await User.findByIdAndUpdate(doc._id, { role: calculatedRole });
+  }
 });
 
 export const User: Model<IUserDocument> = mongoose.models.User || mongoose.model("User", userSchema);
