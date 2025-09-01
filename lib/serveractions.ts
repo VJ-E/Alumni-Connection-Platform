@@ -295,8 +295,28 @@ export const createCommentAction = async (postId: string, commentText: string) =
 export const getAllUsers = async () => {
     try {
         await connectDB();
-        const users = await User.find().lean();
-        return JSON.parse(JSON.stringify(users));
+        const user = await currentUser();
+        if (!user) return [];
+
+        // First ensure current user's profile exists
+        await getUserProfile();
+
+        // Get all users
+        const users = await User.find({}).exec();
+        
+        // Transform users to safe format
+        const transformedUsers = users.map(user => ({
+            userId: user.userId,
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email || "",
+            profilePhoto: user.profilePhoto || "/default-avatar.png",
+            description: user.description || "",
+            graduationYear: user.graduationYear || null,
+            role: user.role
+        }));
+
+        return transformedUsers;
     } catch (error) {
         console.error('Error fetching users:', error);
         return [];
@@ -403,7 +423,7 @@ export const getMessages = async (otherUserId: string) => {
 }
 
 // Send a message
-export const sendMessage = async (receiverId: string, content: string) => {
+export async function sendMessage(receiverId: string, content: string, imageUrl?: string) {
     try {
         await connectDB();
         const sender = await currentUser();
@@ -423,9 +443,11 @@ export const sendMessage = async (receiverId: string, content: string) => {
         }
 
         const message = await Message.create({
-            content,
             senderId: sender.id,
-            receiverId
+            receiverId,
+            content,
+            imageUrl, // add this field to your model
+            createdAt: new Date(),
         });
 
         revalidatePath('/messages');
@@ -595,8 +617,28 @@ export const getUserProfile = async () => {
             }
         }
 
+        // Ensure role is set correctly based on graduation year
+        const currentYear = new Date().getFullYear();
+        const calculatedRole = profile.graduationYear && profile.graduationYear <= currentYear ? 'alumni' : 'student';
+        
+        if (profile.role !== calculatedRole) {
+            profile.role = calculatedRole;
+            await profile.save();
+            console.log('Updated user role to:', calculatedRole);
+        }
+
         // Convert to plain object and return
-        const profileData = JSON.parse(JSON.stringify(profile));
+        const profileData = {
+            userId: profile.userId,
+            firstName: profile.firstName || '',
+            lastName: profile.lastName || '',
+            email: profile.email || '',
+            profilePhoto: profile.profilePhoto || '/default-avatar.png',
+            description: profile.description || '',
+            graduationYear: profile.graduationYear || null,
+            role: calculatedRole
+        };
+        
         console.log('Returning profile data:', profileData);
         return profileData;
     } catch (error) {
@@ -727,3 +769,23 @@ export const dislikePostAction = async (postId: string) => {
         throw new Error(error.message || 'Failed to unlike post');
     }
 };
+
+// Upload chat image
+export const uploadChatImage = async (imageData: string) => {
+    try {
+        await connectDB();
+        const user = await currentUser();
+        if (!user) throw new Error('User not authenticated');
+
+        if (!imageData) throw new Error('No image data provided');
+        
+        const uploadResponse = await cloudinary.uploader.upload(imageData, {
+            folder: 'chat-images'
+        });
+        
+        return uploadResponse.secure_url;
+    } catch (error: any) {
+        console.error('Error in uploadChatImage:', error);
+        throw new Error(error.message || 'Failed to upload image');
+    }
+}
