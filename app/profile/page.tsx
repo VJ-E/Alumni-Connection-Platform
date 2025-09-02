@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ProfileForm from "@/components/ProfileForm";
 import { getUserProfile } from "@/lib/serveractions";
+import { IUser } from "@/models/user.model";
 
 export default async function ProfilePage() {
   const user = await currentUser();
@@ -10,6 +11,10 @@ export default async function ProfilePage() {
   }
 
   const profile = await getUserProfile();
+  
+  if (!profile) {
+    redirect("/sign-in"); // Redirect to sign-in if no profile exists
+  }
 
   return (
     <div className="pt-20">
