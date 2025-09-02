@@ -600,7 +600,7 @@ export const getUserProfile = async () => {
                 profilePhoto: user.imageUrl || '/default-avatar.png',
                 description: '',
                 graduationYear: currentYear, // Default to current year
-                role: 'student' // Default role
+                role: 'student' as const // Explicitly type as 'student'
             };
             console.log('New user data:', userData);
             
@@ -619,7 +619,7 @@ export const getUserProfile = async () => {
 
         // Ensure role is set correctly based on graduation year
         const currentYear = new Date().getFullYear();
-        const calculatedRole = profile.graduationYear && profile.graduationYear <= currentYear ? 'alumni' : 'student';
+        const calculatedRole = profile.graduationYear && profile.graduationYear <= currentYear ? 'alumni' as const : 'student' as const;
         
         if (profile.role !== calculatedRole) {
             profile.role = calculatedRole;
