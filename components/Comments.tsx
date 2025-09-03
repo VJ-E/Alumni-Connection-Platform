@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import CommentInput from './CommentInput';
+import Image from 'next/image';
 
 interface SafePost {
     _id: string;
@@ -51,11 +52,14 @@ const Comments = ({ post }: { post: SafePost }) => {
       <div className="space-y-4">
         {commentsToShow?.map((comment) => (
           <div key={comment._id} className="flex items-start gap-2">
-            <img
-              src={comment.user.profilePhoto}
-              alt={`${comment.user.firstName}'s profile`}
-              className="w-8 h-8 rounded-full"
-            />
+            <div className="relative w-8 h-8">
+              <Image
+                src={comment.user.profilePhoto}
+                alt={`${comment.user.firstName}'s profile`}
+                fill
+                className="rounded-full object-cover"
+              />
+            </div>
             <div className="flex-1">
               <div className="bg-gray-100 rounded-lg p-3">
                 <div className="font-semibold text-sm">
