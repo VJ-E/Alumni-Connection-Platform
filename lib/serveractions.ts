@@ -8,7 +8,8 @@ import { currentUser } from "@clerk/nextjs/server"
 import { v2 as cloudinary } from 'cloudinary';
 import connectDB from "./db";
 import { revalidatePath } from "next/cache";
-import { Comment } from "@/models/comment.model";
+import { Comment, ICommentDocument } from "@/models/comment.model";
+import { Types } from "mongoose";
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -273,14 +274,21 @@ export const createCommentAction = async (postId: string, commentText: string) =
         const post = await Post.findById(postId);
         if (!post) throw new Error('Post not found');
 
-        // Create the comment
-        const comment = await Comment.create({
+        // Create the comment with proper typing
+        const commentData = {
             textMessage: commentText,
             user: userDatabase
-        });
+        };
 
-        // Add comment to post
-        post.comments = [...(post.comments || []), comment._id];
+        const comment = await Comment.create(commentData);
+        const typedComment = comment as unknown as { _id: Types.ObjectId };
+
+        // Add comment reference to post
+        if (!post.comments) {
+            post.comments = [];
+        }
+        
+        post.comments.push(typedComment._id);
         await post.save();
 
         revalidatePath("/");
