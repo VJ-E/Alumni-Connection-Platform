@@ -30,6 +30,7 @@ const createUserObject = async (user: any) => {
         profilePhoto: user.imageUrl || "/default-avatar.png",
         description: userProfile?.description || "",
         graduationYear: userProfile?.graduationYear || new Date().getFullYear(),
+        linkedInUrl: userProfile?.linkedInUrl || "",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -44,6 +45,7 @@ interface SafeUser {
     description: string;
     graduationYear: number | null;
     role: string;
+    linkedInUrl: string;
 }
 
 interface SafeComment {
@@ -85,6 +87,7 @@ const serializeDocument = (doc: any): SafePost | null => {
             profilePhoto: plainDoc.user.profilePhoto || "/default-avatar.png",
             description: plainDoc.user.description || "",
             graduationYear: plainDoc.user.graduationYear || null,
+            linkedInUrl: plainDoc.user.linkedInUrl || "",
             role: plainDoc.user.role || "student"
         };
     }
@@ -102,6 +105,7 @@ const serializeDocument = (doc: any): SafePost | null => {
                 profilePhoto: comment.user.profilePhoto || "/default-avatar.png",
                 description: comment.user.description || "",
                 graduationYear: comment.user.graduationYear || null,
+                linkedInUrl: comment.user.linkedInUrl || "",
                 role: comment.user.role || "student"
             } : null,
             createdAt: comment.createdAt?.toString() || new Date().toISOString(),
@@ -156,6 +160,8 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
                         profilePhoto: post.user.profilePhoto,
                         description: post.user.description || "",
                         graduationYear: userProfile.graduationYear,
+                        linkedInUrl: userProfile.linkedInUrl || "",
+                        githubUrl: userProfile.githubUrl || "",
                         role: userProfile.role || "student"
                     };
                 }
@@ -201,6 +207,7 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
         profilePhoto: userProfile.profilePhoto || "/default-avatar.png",
         description: userProfile.description || "",
         graduationYear: userProfile.graduationYear || null,
+        linkedInUrl: userProfile.linkedInUrl || "",
         role: userProfile.role || role // Use stored role or calculate it
     };
 };
@@ -321,6 +328,7 @@ export const getAllUsers = async () => {
             profilePhoto: user.profilePhoto || "/default-avatar.png",
             description: user.description || "",
             graduationYear: user.graduationYear || null,
+            linkedInUrl: user.linkedInUrl || "",
             role: user.role
         }));
 
@@ -363,6 +371,7 @@ export const getConnectedUsers = async () => {
             profilePhoto: user.profilePhoto || "/default-avatar.png",
             description: user.description || "",
             graduationYear: user.graduationYear || null,
+            linkedInUrl: user.linkedInUrl || "",
             role: user.role || "student"
         }));
 
@@ -388,6 +397,7 @@ export const getUserById = async (userId: string) => {
             profilePhoto: user.profilePhoto || "/default-avatar.png",
             description: user.description || "",
             graduationYear: user.graduationYear || null,
+            linkedInUrl: user.linkedInUrl || "",
             role: user.role || "student"
         };
     } catch (error) {
@@ -525,6 +535,7 @@ export const getConnectionRequests = async () => {
                         email: sender.email || "",
                         profilePhoto: sender.profilePhoto || "/default-avatar.png",
                         description: sender.description || "",
+                        linkedInUrl: sender.linkedInUrl || "",
                         graduationYear: sender.graduationYear || null
                     } : null
                 };
@@ -607,7 +618,9 @@ export const getUserProfile = async () => {
                 email: user.emailAddresses[0]?.emailAddress || '',
                 profilePhoto: user.imageUrl || '/default-avatar.png',
                 description: '',
-                graduationYear: currentYear, // Default to current year
+            linkedInUrl: '',
+            githubUrl: '',
+            graduationYear: currentYear, // Default to current year
                 role: 'student' as const // Explicitly type as 'student'
             };
             console.log('New user data:', userData);
@@ -644,6 +657,8 @@ export const getUserProfile = async () => {
             profilePhoto: profile.profilePhoto || '/default-avatar.png',
             description: profile.description || '',
             graduationYear: profile.graduationYear || null,
+            linkedInUrl: profile.linkedInUrl || "",
+            githubUrl: profile.githubUrl || "",
             role: calculatedRole
         };
         
@@ -661,6 +676,8 @@ export const updateProfile = async (data: {
     lastName: string;
     description: string;
     graduationYear: number;
+    linkedInUrl: string;
+    githubUrl: string;
     profilePhoto: string;
 }) => {
     try {
@@ -695,6 +712,8 @@ export const updateProfile = async (data: {
                     lastName: data.lastName,
                     description: data.description,
                     graduationYear: data.graduationYear,
+                    linkedInUrl: data.linkedInUrl,
+                    githubUrl: data.githubUrl,
                     profilePhoto: imageUrl,
                 },
                 { new: true }
@@ -706,6 +725,8 @@ export const updateProfile = async (data: {
                 lastName: data.lastName,
                 description: data.description,
                 graduationYear: data.graduationYear,
+                linkedInUrl: data.linkedInUrl || "",
+                githubUrl: data.githubUrl || "",
                 profilePhoto: imageUrl,
                 email: user.emailAddresses[0]?.emailAddress || '',
             });
