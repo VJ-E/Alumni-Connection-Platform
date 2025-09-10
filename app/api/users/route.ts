@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const role = user.graduationYear && user.graduationYear <= currentYear ? 'alumni' : 'student';
 
     // Update user role if it's different
-    if (user.role !== role) {
+    if (user.role !== role && user.role !== 'admin') {
       user.role = role;
       await user.save();
     }
