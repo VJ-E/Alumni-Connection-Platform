@@ -67,8 +67,8 @@ export default function OpportunitiesPage() {
         const data = await response.json()
         console.log('User role data:', data);
         
-        setIsAlumni(data.role === 'alumni')
-        if (data.role === 'alumni') {
+        setIsAlumni(data.role === 'alumni' || data.role === 'admin')
+        if (data.role === 'alumni' || data.role === 'admin') {
           toast.success('Welcome! As an alumni, you can add events to the calendar.')
         } else {
           toast.info('Welcome! Only alumni can add events to the calendar.')
