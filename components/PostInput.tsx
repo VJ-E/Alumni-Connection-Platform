@@ -29,7 +29,7 @@ const PostInput = () => {
   return (
     <div className="bg-card text-card-foreground p-4 m-2 md:m-0 border border-border rounded-lg">
       <div className="flex items-center gap-3">
-        <ProfilePhoto src={profile?.profilePhoto || "./default-avator.png"} />
+        <ProfilePhoto src={profile?.profilePhoto || "/default-avatar.png"} />
         <Input
           type="text"
           placeholder="Share something..."
@@ -39,7 +39,7 @@ const PostInput = () => {
         <PostDialog
           setOpen={setOpen}
           open={open}
-          src={profile?.profilePhoto || "./default-avator.png"}
+          src={profile?.profilePhoto || "/default-avatar.png"}
           fullName={user ? `${user?.firstName} ${user?.lastName}` : "Full name"}
         />
       </div>

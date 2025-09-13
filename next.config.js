@@ -1,5 +1,35 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Configure images
+  images: {
+    // Allow images from these domains
+    domains: [
+      'res.cloudinary.com',
+      'alumni-connection-platform-production.up.railway.app',
+      'alumni-connection-platform.vercel.app'
+    ],
+    // Enable image optimization
+    formats: ['image/avif', 'image/webp'],
+    // Disable image optimization during development
+    disableStaticImages: process.env.NODE_ENV !== 'production',
+    // Configure device sizes for responsive images
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    // Configure image sizes for responsive images
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Allow all image content types
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Enable remotePatterns for more control
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+
   // Enable React Strict Mode
   reactStrictMode: true,
   
