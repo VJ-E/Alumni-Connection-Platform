@@ -10,7 +10,7 @@ type MongooseCache = {
 };
 
 // Initialize the cache
-const MONGODB_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGO_URI environment variable");

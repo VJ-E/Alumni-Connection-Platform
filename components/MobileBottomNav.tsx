@@ -50,7 +50,7 @@ export default function MobileBottomNav() {
             }`}
           >
             <Briefcase className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">Jobs</span>
+            <span className="text-xs font-medium">Events</span>
           </Link>
         </div>
 
@@ -133,5 +133,7 @@ export default function MobileBottomNav() {
     </div>
   );
 }
+
+
 
 

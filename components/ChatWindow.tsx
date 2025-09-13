@@ -11,7 +11,7 @@ import { getConnectionStatus, sendMessage as sendMessageToServer } from "@/lib/s
 import { toast } from "react-toastify";
 import { Images } from "lucide-react";
 import Image from "next/image";
-import { useSocket } from "@/contexts/SocketContext";
+import { useSocket, useSocketConnection } from "@/contexts/SocketContext";
 import { useOnlineStatus } from "./OfflineIndicator";
 
 // Helper function to convert URLs to clickable links
@@ -58,7 +58,8 @@ export default function ChatWindow({
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [imageUploading, setImageUploading] = useState(false);
-  const { socket, isConnected } = useSocket();
+  const socket = useSocket();
+  const { isConnected } = useSocketConnection();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const [otherUserLastReadAt, setOtherUserLastReadAt] = useState<Date | null>(null);
   const isOnline = useOnlineStatus();

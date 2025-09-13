@@ -58,7 +58,7 @@ export default function MessagesList({ currentUser }: MessagesListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<MessageTab>('dms');
   const [processingRequests, setProcessingRequests] = useState<Record<string, boolean>>({});
-  const { socket } = useSocket();
+  const socket = useSocket();
   const isOnline = useOnlineStatus();
 
   const [lastMap, setLastMap] = useState<

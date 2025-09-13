@@ -199,9 +199,9 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
               </div>
             </div>
             {/* Gradient fade effect for the right edge */}
-            <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-16 pointer-events-none" style={{
+            {/* <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-16 pointer-events-none" style={{
               background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 80%)'
-            }} />
+            }} /> */}
           </div>
         </div>
       </div>

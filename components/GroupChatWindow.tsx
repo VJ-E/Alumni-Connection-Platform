@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSocket } from "@/providers/SocketProvider"; // <-- updated import
+import { useSocket } from "@/contexts/SocketContext";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "react-toastify";

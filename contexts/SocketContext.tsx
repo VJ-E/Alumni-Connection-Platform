@@ -18,7 +18,8 @@ export const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 });
 
-export const useSocket = () => useContext(SocketContext);
+export const useSocket = () => useContext(SocketContext).socket;
+export const useSocketConnection = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<any>(null);
@@ -55,7 +56,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     // Socket.IO connection options
     const socketOptions = {
-      path: '/socket.io/',
+      path: '/api/socket',
       transports: ['websocket', 'polling'],
       upgrade: true,
       reconnection: true,
@@ -88,7 +89,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Initialize socket connection with retry logic
-    const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL!, socketOptions);
+    // Connect to the Next.js API route instead of separate backend
+    const socketUrl = process.env.NODE_ENV === 'production' 
+      ? (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'https://alumni-connection-platform.vercel.app')
+      : 'http://localhost:3000';
+    const socketInstance = io(socketUrl, socketOptions);
     socketRef.current = socketInstance;
     connectionAttempts.current++;
     
@@ -97,7 +102,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     console.log(`[${connectionId}] Initializing socket connection... (Attempt ${connectionAttempts.current})`);
 
     // Debug logging
-    console.log('Initializing socket connection to:', process.env.NEXT_PUBLIC_SOCKET_URL);
+    console.log('Initializing socket connection to:', socketUrl);
 
     // Set up event listeners
     const onConnect = () => {
