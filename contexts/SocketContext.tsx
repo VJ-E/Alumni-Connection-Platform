@@ -56,7 +56,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     // Socket.IO connection options
     const socketOptions = {
-      path: '/api/socket',
+      path: '/api/socket.io', // Match the server path
       transports: ['websocket', 'polling'],
       upgrade: true,
       reconnection: true,
@@ -64,29 +64,43 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       reconnectionDelay: 2000,
       reconnectionDelayMax: 10000,
       timeout: 20000,
-      forceNew: false, // Changed to false to prevent multiple connections
+      forceNew: false,
       autoConnect: true,
       // Add secure flag for HTTPS
       secure: process.env.NODE_ENV === 'production',
-      // Add query parameters for user identification
+      // Add authentication in auth object
+      auth: {
+        token: userId,
+        userId: userId
+      },
+      // Add query parameters for identification
       query: {
-        userId: userId,
         clientType: 'web',
         version: '1.0',
-        t: Date.now() // Add timestamp to prevent caching
+        t: Date.now() // Timestamp to prevent caching
       },
-      // Add authentication
-      auth: {
-        token: userId
-      },
-      // Add connection state recovery options
+      // Enable credentials for CORS
       withCredentials: true,
-      // Add WebSocket specific options
+      // WebSocket specific options
       wsEngine: 'ws',
-      // Add ping/pong timeouts
-      pingTimeout: 10000,
-      pingInterval: 25000
+      // Increase timeouts for production
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      // Add agent for better WebSocket handling
+      agent: false,
+      // Enable multiplexing
+      multiplex: true,
+      // Add connection state recovery
+      connectionStateRecovery: {
+        maxDisconnectionDuration: 5 * 60 * 1000
+      }
     };
+    
+    console.log('Connecting to Socket.IO with options:', {
+      ...socketOptions,
+      auth: { token: '***', userId: userId },
+      query: { ...socketOptions.query, t: '***' }
+    });
 
     // Initialize socket connection with retry logic
     // Connect to the Next.js API route instead of separate backend
