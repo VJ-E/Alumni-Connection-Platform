@@ -4,7 +4,7 @@ import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import SearchInput from './SearchInput';
 import NavItems from './NavItems';
-import { SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, useUser, useAuth } from '@clerk/nextjs';
 import { Button } from './ui/button';
 import { useRouter } from "next/navigation";
 import {
@@ -84,6 +84,13 @@ const Navbar = () => {
                       View Profile
                     </DropdownMenuItem>
                   </Link>
+                  {profile?.role === 'admin' && (
+                    <Link href="/verification">
+                      <DropdownMenuItem className="cursor-pointer">
+                        Verify Users
+                      </DropdownMenuItem>
+                    </Link>
+                  )}
                   <SignOutButton>
                     <DropdownMenuItem className="cursor-pointer text-destructive">
                       Sign Out

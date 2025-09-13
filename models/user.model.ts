@@ -15,6 +15,8 @@ export interface IUser {
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
+  verificationDocument?: string; // Path to the uploaded verification document
+  isVerified: boolean; // Whether the user has been verified by an admin
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -77,6 +79,14 @@ const userSchema = new mongoose.Schema<IUser>({
   githubUrl: {
     type: String,
     default: "",
+  },
+  verificationDocument: {
+    type: String,
+    default: "",
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
   },
 }, { timestamps: true });
 

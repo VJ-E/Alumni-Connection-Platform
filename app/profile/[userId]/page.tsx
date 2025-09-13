@@ -16,10 +16,12 @@ type UserProfile = {
   description: string;
   graduationYear: number | null;
   department: Department | ''; // Can be a Department value or empty string
-  major: string; // Added missing major field
+  major: string;
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
+  isVerified: boolean;
+  verificationDocument?: string;
 };
 
 export default async function UserProfilePage({ params }: { params: { userId: string } }) {
@@ -51,11 +53,13 @@ export default async function UserProfilePage({ params }: { params: { userId: st
       profilePhoto: profile.profilePhoto || "/default-avatar.png",
       description: profile.description || "",
       graduationYear: profile.graduationYear || null,
-      department: profile.department || '', // Default to empty string if not provided
-      major: profile.major || '', // Added major field
-      role: (profile.role as 'student' | 'alumni' | 'admin') || 'student', // Ensure role is one of the allowed values
+      department: profile.department || '',
+      major: profile.major || '',
+      role: (profile.role as 'student' | 'alumni' | 'admin') || 'student',
+      isVerified: profile.isVerified || false,
       ...(profile.linkedInUrl && { linkedInUrl: profile.linkedInUrl }),
-      ...(profile.githubUrl && { githubUrl: profile.githubUrl })
+      ...(profile.githubUrl && { githubUrl: profile.githubUrl }),
+      ...(profile.verificationDocument && { verificationDocument: profile.verificationDocument })
     };
 
     // If the current user is viewing their own profile, allow editing

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, MessageSquare, Briefcase, User } from "lucide-react";
+import { Home, Users, MessageSquare, Briefcase, User, ShieldCheck, LogOut } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
 import { Button } from './ui/button';
 import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
@@ -106,11 +106,21 @@ export default function MobileBottomNav() {
               <DropdownMenuContent align="end" className="w-56 mb-2">
                 <Link href={user ? `/profile/${user.id}` : "/profile"}>
                   <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
                     View Profile
                   </DropdownMenuItem>
                 </Link>
+                {profile?.role === 'admin' && (
+                  <Link href="/verification">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Verify Users
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <SignOutButton>
                   <DropdownMenuItem className="cursor-pointer text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
                   </DropdownMenuItem>
                 </SignOutButton>

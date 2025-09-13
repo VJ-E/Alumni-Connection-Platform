@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { join } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import connectDB from "@/lib/db";
 import { User, type Department } from "@/models/user.model";
 import { auth } from "@clerk/nextjs/server";
 import { IUser } from "@/models/user.model";
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
+
+// Configure upload directory
+const UPLOAD_DIR = join(process.cwd(), 'public/uploads/verification');
+const UPLOAD_PATH_PREFIX = '/uploads/verification/';
 
 // GET user by email
 export async function GET(req: NextRequest) {
@@ -55,26 +70,29 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     
-    const { userId } = auth();
-    if (!userId) {
+    const { userId: authUserId } = auth();
+    if (!authUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { 
-      clerkId, 
-      email, 
-      firstName, 
-      lastName, 
-      graduationYear, 
-      department,
-      major,
-      description,
-      linkedInUrl,
-      githubUrl,
-      profilePhoto = '/default-avatar.png'
-    } = body;
-
+    // Handle form data (for file upload)
+    const formData = await req.formData();
+    
+    // Extract text fields
+    const clerkId = formData.get('clerkId')?.toString();
+    const email = formData.get('email')?.toString();
+    const firstName = formData.get('firstName')?.toString();
+    const lastName = formData.get('lastName')?.toString();
+    const graduationYear = formData.get('graduationYear')?.toString();
+    const department = formData.get('department')?.toString();
+    const major = formData.get('major')?.toString();
+    const description = formData.get('description')?.toString();
+    const linkedInUrl = formData.get('linkedInUrl')?.toString();
+    const githubUrl = formData.get('githubUrl')?.toString();
+    
+    // Handle file upload
+    const verificationImage = formData.get('verificationImage') as File | null;
+    
     // Validate required fields
     if (!clerkId || !email || !firstName || !lastName || !graduationYear || !department) {
       return NextResponse.json(
@@ -82,76 +100,88 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    
+    // Validate verification image
+    if (!verificationImage) {
+      return NextResponse.json(
+        { error: 'Verification document is required' },
+        { status: 400 }
+      );
+    }
 
-    // Check if user already exists
-    let user = await User.findOne({ userId: clerkId }); // Map clerkId to userId
+    // Upload verification document to Cloudinary
+    const buffer = Buffer.from(await verificationImage.arrayBuffer());
+    const uploadToCloudinary = () => new Promise<string>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({
+        resource_type: 'image',
+        folder: 'verification-documents'
+      }, (error, result) => {
+        if (error) return reject(error);
+        if (!result || !result.secure_url) return reject(new Error('No URL returned from Cloudinary'));
+        resolve(result.secure_url);
+      });
+      stream.end(buffer);
+    });
+
+    const verificationDocUrl = await uploadToCloudinary();
+
+    // Create or update user
+    let user = await User.findOne({ userId: authUserId });
+    
+    // Determine role based on graduation year
+    const currentYear = new Date().getFullYear();
+    const gradYear = graduationYear ? parseInt(graduationYear) : user?.graduationYear;
+    const role = gradYear && gradYear <= currentYear ? 'alumni' : 'student';
     
     if (user) {
       // Update existing user
-      const updatedUser = await User.findOneAndUpdate(
-        { userId: clerkId }, // Map clerkId to userId
-        {
-          firstName,
-          lastName,
-          email,
-          graduationYear: parseInt(graduationYear as string),
-          department: department as Department,
-          major: major || '',
-          description: description || '',
-          linkedInUrl: linkedInUrl || '',
-          githubUrl: githubUrl || '',
-          profilePhoto,
-          role: (parseInt(graduationYear as string) <= new Date().getFullYear() ? 'alumni' : 'student') as 'alumni' | 'student'
-        },
-        { new: true }
-      );
+      user.firstName = firstName || user.firstName;
+      user.lastName = lastName || user.lastName;
+      user.email = email || user.email;
+      user.graduationYear = gradYear !== undefined ? gradYear : user.graduationYear;
+      user.department = department as Department || user.department;
+      user.major = major || user.major;
+      user.description = description || user.description;
+      user.linkedInUrl = linkedInUrl || user.linkedInUrl;
+      user.githubUrl = githubUrl || user.githubUrl;
       
-      if (!updatedUser) {
-        throw new Error('Failed to update user');
+      // Only update role if not admin (admins can't be demoted)
+      if (user.role !== 'admin') {
+        user.role = role;
       }
-      user = updatedUser;
+      
+      if (verificationDocUrl) {
+        user.verificationDocument = verificationDocUrl;
+      }
+      
+      await user.save();
+      return NextResponse.json(user);
     } else {
       // Create new user
       const newUser = new User({
-        userId: clerkId, // Map clerkId to userId
-        email,
-        firstName,
-        lastName,
-        graduationYear: parseInt(graduationYear as string),
-        department: department as Department,
+        userId: authUserId,
+        email: email || '',
+        firstName: firstName || '',
+        lastName: lastName || '',
+        graduationYear: graduationYear ? parseInt(graduationYear) : null,
+        department: department as Department || '',
         major: major || '',
         description: description || '',
         linkedInUrl: linkedInUrl || '',
         githubUrl: githubUrl || '',
-        profilePhoto,
-        role: (parseInt(graduationYear as string) <= new Date().getFullYear() ? 'alumni' : 'student') as 'alumni' | 'student'
+        verificationDocument: verificationDocUrl,
+        profilePhoto: '/default-avatar.png',
+        role: role, // Set role based on graduation year
+        isVerified: false, // Set to false until admin verifies
       });
-      user = await newUser.save();
+
+      await newUser.save();
+      return NextResponse.json(newUser, { status: 201 });
     }
-
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user._id,
-        userId: user.userId, // Keep as userId for compatibility
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        profilePhoto: user.profilePhoto,
-        graduationYear: user.graduationYear,
-        department: user.department,
-        major: user.major, // Added major field
-        description: user.description,
-        linkedInUrl: user.linkedInUrl,
-        githubUrl: user.githubUrl
-      }
-    });
-
   } catch (error) {
-    console.error('Error in user registration:', error);
+    console.error('Error in POST /api/users:', error);
     return NextResponse.json(
-      { error: 'Failed to process user registration' }, 
+      { error: error instanceof Error ? error.message : 'Internal Server Error' },
       { status: 500 }
     );
   }

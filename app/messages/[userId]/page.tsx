@@ -14,10 +14,12 @@ interface ChatUser {
   description: string;
   graduationYear: number | null;
   department: Department | '';
-  major: string; // Added missing major field
+  major: string;
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
+  isVerified: boolean;
+  verificationDocument?: string;
 }
 
 export default async function ChatPage({ params }: { params: { userId: string } }) {
@@ -59,10 +61,12 @@ export default async function ChatPage({ params }: { params: { userId: string } 
       description: currentUserData.description || "",
       graduationYear: currentUserData.graduationYear || null,
       department: currentUserData.department || '',
-      major: currentUserData.major || '', // Added major field
+      major: currentUserData.major || '',
       role: (currentUserData.role as 'student' | 'alumni' | 'admin') || 'student',
+      isVerified: currentUserData.isVerified || false,
       ...(currentUserData.linkedInUrl && { linkedInUrl: currentUserData.linkedInUrl }),
-      ...(currentUserData.githubUrl && { githubUrl: currentUserData.githubUrl })
+      ...(currentUserData.githubUrl && { githubUrl: currentUserData.githubUrl }),
+      ...(currentUserData.verificationDocument && { verificationDocument: currentUserData.verificationDocument })
     };
 
     const safeOtherUser: ChatUser = {
@@ -74,10 +78,12 @@ export default async function ChatPage({ params }: { params: { userId: string } 
       description: otherUser.description || "",
       graduationYear: otherUser.graduationYear || null,
       department: otherUser.department || '',
-      major: otherUser.major || '', // Added major field
+      major: otherUser.major || '',
       role: (otherUser.role as 'student' | 'alumni' | 'admin') || 'student',
+      isVerified: otherUser.isVerified || false,
       ...(otherUser.linkedInUrl && { linkedInUrl: otherUser.linkedInUrl }),
-      ...(otherUser.githubUrl && { githubUrl: otherUser.githubUrl })
+      ...(otherUser.githubUrl && { githubUrl: otherUser.githubUrl }),
+      ...(otherUser.verificationDocument && { verificationDocument: otherUser.verificationDocument })
     };
 
     return (

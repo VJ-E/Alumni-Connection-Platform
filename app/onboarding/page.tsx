@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,8 @@ export default function OnboardingPage() {
     linkedInUrl: '',
     githubUrl: '',
   });
+  const [verificationImage, setVerificationImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -40,21 +43,44 @@ export default function OnboardingPage() {
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVerificationImage(file);
+      // Create a preview URL for the image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!verificationImage) {
+      toast.error('Please upload a verification document (College ID, Transcript, or Company ID)');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
+      // First upload the image
+      const formDataToSend = new FormData();
+      formDataToSend.append('verificationImage', verificationImage);
+      formDataToSend.append('clerkId', user?.id || '');
+      formDataToSend.append('email', user?.emailAddresses[0].emailAddress || '');
+      
+      // Append all form data
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
+      });
+
       const response = await fetch('/api/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clerkId: user?.id,
-          email: user?.emailAddresses[0].emailAddress,
-          ...formData,
-        }),
+        body: formDataToSend,
       });
 
       if (!response.ok) {
@@ -62,8 +88,8 @@ export default function OnboardingPage() {
         throw new Error(errorData.error || 'Failed to save profile');
       }
 
-      toast.success('Profile created successfully!');
-      router.push('/');
+      toast.success('Profile submitted for verification!');
+      router.push('/waiting-verification');
     } catch (error) {
       console.error('Error creating profile:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to save profile. Please try again.');
@@ -83,8 +109,43 @@ export default function OnboardingPage() {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information */}
-          <div className="space-y-4">
+          {/* Verification */}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Verification</h3>
+              <div className="space-y-2">
+                <Label htmlFor="verificationImage">Verification Document *</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Please upload a clear photo of your College ID, Transcript, or Company ID for verification.
+                </p>
+                <Input
+                  id="verificationImage"
+                  name="verificationImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                  required
+                />
+                {imagePreview && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium mb-1">Preview:</p>
+                    <div className="relative w-40 h-40 border rounded-md overflow-hidden">
+                      <Image
+                        src={imagePreview}
+                        alt="Verification document preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {verificationImage?.name}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <h3 className="text-lg font-semibold border-b pb-2">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

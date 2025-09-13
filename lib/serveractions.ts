@@ -164,10 +164,12 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
                         email: post.user.email,
                         profilePhoto: post.user.profilePhoto,
                         department: post.user.department,
-                        major: post.user.major || userProfile.major || "", // Added major field
+                        major: post.user.major || userProfile.major || "",
                         description: post.user.description || "",
                         graduationYear: userProfile.graduationYear,
                         linkedInUrl: userProfile.linkedInUrl || "",
+                        isVerified: userProfile.isVerified || false,
+                        verificationDocument: userProfile.verificationDocument || "",
                         githubUrl: userProfile.githubUrl || "",
                         role: userProfile.role || "student"
                     };

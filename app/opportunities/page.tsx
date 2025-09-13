@@ -149,30 +149,13 @@ export default function OpportunitiesPage() {
     }
   };
 
-  const handleEventAdded = async (newEvent: NewEvent) => {
-    try {
-      const response = await fetch('/api/opportunities', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newEvent),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create event');
-      }
-
-      const createdEvent = await response.json();
-      setEvents(prev => [...prev, { ...createdEvent, date: new Date(createdEvent.date) }]);
-      setIsAddEventOpen(false);
-      toast.success('Event created successfully!');
-    } catch (error) {
-      console.error('Error creating event:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create event');
-    }
-  };
+  const handleEventAdded = (newEvent: NewEvent) => {
+    // The event is already added to the database by the AddEventDialog component
+    // and the events will be automatically refreshed by the useEffect that fetches events
+    setIsAddEventOpen(false);
+    // No need to manually add to events state as it will trigger a re-fetch
+    toast.success('Event created successfully!');
+  }
 
   if (error) {
     return (

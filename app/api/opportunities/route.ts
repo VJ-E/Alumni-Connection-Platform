@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
     
-    // Check if user is an alumni
+    // Check if user is an alumni or admin
     const user = await User.findOne({ userId });
-    if (!user || user.role !== 'alumni') {
-      return NextResponse.json({ error: 'Only alumni can create events' }, { status: 403 });
+    if (!user || (user.role !== 'alumni' && user.role !== 'admin')) {
+      return NextResponse.json({ error: 'Only alumni and admins can create events' }, { status: 403 });
     }
 
     const data = await req.json();
