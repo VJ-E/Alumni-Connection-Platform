@@ -45,8 +45,23 @@ const nextConfig = {
   publicRuntimeConfig: {
     // Will be available on both server and client
     wsUrl: process.env.NODE_ENV === 'production'
-      ? `wss://${process.env.RAILWAY_PUBLIC_DOMAIN || 'alumni-connection-platform.vercel.app'}`
+      ? `${process.env.NEXT_PUBLIC_APP_URL?.startsWith('https') ? 'wss' : 'ws'}://${process.env.RAILWAY_PUBLIC_DOMAIN || process.env.VERCEL_URL || 'localhost:3000'}`
       : 'ws://localhost:3000',
+    // Add app URL for client-side use
+    appUrl: process.env.NEXT_PUBLIC_APP_URL || 
+           (process.env.NODE_ENV === 'production' 
+             ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN || process.env.VERCEL_URL || 'localhost:3000'}`
+             : 'http://localhost:3000'),
+  },
+  
+  // Add health check endpoint for Railway
+  async rewrites() {
+    return [
+      {
+        source: '/health',
+        destination: '/api/health',
+      },
+    ];
   },
 };
 

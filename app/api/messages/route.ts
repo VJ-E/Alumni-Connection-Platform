@@ -18,7 +18,7 @@ const Message = mongoose.models.Message || mongoose.model('Message', new mongoos
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = req.nextUrl;
     const receiverId = searchParams.get('receiverId');
     
     if (!receiverId) {

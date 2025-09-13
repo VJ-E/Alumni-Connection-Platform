@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import { User } from "@/models/user.model";
 
+// Mark this route as dynamic to prevent static generation
+// This is needed because we're using request parameters
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
