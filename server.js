@@ -59,16 +59,32 @@ const startApp = async () => {
       }
     });
 
-    // Initialize Socket.IO
-    initializeSocket(httpServer);
+        // Initialize Socket.IO and get the instance
+    const io = initializeSocket(httpServer);
+
+    // Handle WebSocket upgrade requests
+    httpServer.on('upgrade', (req, socket, head) => {
+      const { pathname } = parse(req.url, true);
+      
+      // Handle Socket.IO WebSocket upgrade
+      if (pathname === '/api/socket.io/') {
+        io.engine.handleUpgrade(req, socket, head, (ws) => {
+          io.engine.onWebSocket(req, ws);
+        });
+      } else {
+        // Close the connection if the path is not recognized
+        socket.destroy();
+      }
+    });
 
     httpServer
       .once('error', (err) => {
-        console.error(err);
+        console.error('HTTP server error:', err);
         process.exit(1);
       })
       .listen(port, () => {
-        console.log(`> Ready on http://${hostname}:${port}`);
+        console.log(`> Server running on http://${hostname}:${port}`);
+        console.log('> WebSocket endpoint: ws://' + hostname + ':' + port + '/api/socket.io/');
       });
   } catch (error) {
     console.error('Failed to start server:', error);

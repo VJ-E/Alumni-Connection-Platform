@@ -54,60 +54,97 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // Get the WebSocket URL from environment or use relative URL
+    const wsProtocol = typeof window !== 'undefined' ? 
+      (window.location.protocol === 'https:' ? 'wss:' : 'ws:') : 'ws:';
+    const wsHost = typeof window !== 'undefined' ? 
+      window.location.host : 'localhost:3000';
+    
     // Socket.IO connection options
     const socketOptions = {
       path: '/api/socket.io', // Match the server path
       transports: ['websocket', 'polling'],
       upgrade: true,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-      reconnectionDelayMax: 10000,
-      timeout: 20000,
-      forceNew: false,
+      reconnectionAttempts: 10, // Increased from 5 to 10
+      reconnectionDelay: 1000, // Start with 1s delay
+      reconnectionDelayMax: 10000, // Max 10s delay
+      timeout: 30000, // Increased from 20000 to 30000
+      forceNew: true, // Changed to true to ensure fresh connections
       autoConnect: true,
-      // Add secure flag for HTTPS
-      secure: process.env.NODE_ENV === 'production',
+      // Use secure based on current protocol
+      secure: typeof window !== 'undefined' ? window.location.protocol === 'https:' : false,
       // Add authentication in auth object
       auth: {
         token: userId,
-        userId: userId
+        userId: userId,
+        timestamp: Date.now()
       },
       // Add query parameters for identification
       query: {
         clientType: 'web',
-        version: '1.0',
-        t: Date.now() // Timestamp to prevent caching
+        version: '1.0.0',
+        _: Date.now() // Cache buster
       },
       // Enable credentials for CORS
       withCredentials: true,
-      // WebSocket specific options
-      wsEngine: 'ws',
       // Increase timeouts for production
-      pingTimeout: 60000,
-      pingInterval: 25000,
-      // Add agent for better WebSocket handling
-      agent: false,
-      // Enable multiplexing
-      multiplex: true,
+      pingTimeout: 60000, // 60 seconds
+      pingInterval: 25000, // 25 seconds
+      // Disable auto-upgrade to WebSocket
+      // Let the client and server negotiate the best transport
+      // Remove wsEngine as it's not needed and can cause issues
       // Add connection state recovery
       connectionStateRecovery: {
-        maxDisconnectionDuration: 5 * 60 * 1000
-      }
+        maxDisconnectionDuration: 5 * 60 * 1000, // 5 minutes
+        skipMiddlewares: true
+      },
+      // Add per-message deflate compression
+      perMessageDeflate: {
+        threshold: 1024, // Size threshold in bytes for compression
+        zlibDeflateOptions: {
+          level: 3 // Compression level (0-9, where 9 is maximum compression)
+        },
+        zlibInflateOptions: {
+          chunkSize: 10 * 1024 // 10KB chunks
+        }
+      },
+      // Enable debug logging in development
+      debug: process.env.NODE_ENV !== 'production',
+      // Add a connection timeout
+      connectTimeout: 10000 // 10 seconds
     };
     
-    console.log('Connecting to Socket.IO with options:', {
+    // Determine the WebSocket URL based on environment
+    const wsUrl = (() => {
+      if (typeof window !== 'undefined') {
+        // In the browser, use the current host
+        return window.location.host;
+      }
+      // For server-side rendering or testing
+      return process.env.NODE_ENV === 'production'
+        ? process.env.NEXT_PUBLIC_VERCEL_URL || 'alumni-connection-platform.vercel.app'
+        : 'localhost:3000';
+    })();
+
+    // Determine the protocol (ws or wss)
+    const protocol = typeof window !== 'undefined' 
+      ? window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      : 'ws:';
+
+    // Construct the full WebSocket URL
+    const socketUrl = `${protocol}//${wsUrl}`;
+
+    console.log(`Connecting to Socket.IO at ${socketUrl} with options:`, {
       ...socketOptions,
-      auth: { token: '***', userId: userId },
-      query: { ...socketOptions.query, t: '***' }
+      auth: { ...socketOptions.auth, token: '[REDACTED]' },
+      query: { ...socketOptions.query, _: '[REDACTED]' }
     });
 
-    // Initialize socket connection with retry logic
-    // Connect to the Next.js API route instead of separate backend
-    const socketUrl = process.env.NODE_ENV === 'production' 
-      ? (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'https://alumni-connection-platform.vercel.app')
-      : 'http://localhost:3000';
+    // Create a new socket instance with the full URL
     const socketInstance = io(socketUrl, socketOptions);
+    
+    // Store the socket instance in the ref
     socketRef.current = socketInstance;
     connectionAttempts.current++;
     
