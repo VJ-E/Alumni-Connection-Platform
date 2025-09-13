@@ -72,7 +72,7 @@ export default function MobileBottomNav() {
           <Link
             href="/messages"
             className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-all duration-200 min-w-[56px] touch-manipulation active:scale-95 ${
-              pathname.startsWith("/messages")
+              pathname?.startsWith?.("/messages")
                 ? "text-primary scale-105 bg-primary/10"
                 : "text-muted-foreground hover:text-foreground"
             }`}
@@ -87,7 +87,7 @@ export default function MobileBottomNav() {
                 <Button 
                   variant="ghost" 
                   className={`flex flex-col items-center p-2 sm:p-3 h-auto min-w-[56px] transition-all duration-200 touch-manipulation active:scale-95 ${
-                    pathname.startsWith("/profile")
+                    pathname?.startsWith?.("/profile")
                       ? "text-primary scale-105 bg-primary/10"
                       : "text-muted-foreground hover:text-foreground"
                   }`}

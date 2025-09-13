@@ -51,7 +51,7 @@ export default function NavItems() {
       <Link
         href="/messages"
         className={`p-3 rounded-lg transition-colors ${
-          pathname.startsWith("/messages")
+          pathname?.startsWith?.("/messages")
             ? "bg-accent text-accent-foreground"
             : "hover:bg-accent/50 text-muted-foreground"
         }`}
