@@ -61,59 +61,56 @@ export default authMiddleware({
     // User is signed in
     try {
       const baseUrl = `${url.protocol}//${url.host}`;
+      
+      // Skip verification for API routes and public paths
+      if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
+        return NextResponse.next();
+      }
+      
+      // Get user data from the database
       const userResponse = await fetch(`${baseUrl}/api/users/${auth.userId}`, {
         headers: {
           'Cookie': req.headers.get('cookie') || ''
-        }
+        },
+        // Important: Don't cache this request
+        cache: 'no-store'
       });
       
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        
-        // If user is admin, allow access to all routes
-        if (userData.role === 'admin') {
-          // If admin is on auth pages, redirect to home
-          if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')) {
-            return NextResponse.redirect(new URL('/', req.url));
-          }
-          return NextResponse.next();
+      if (!userResponse.ok) {
+        console.error('Failed to fetch user data:', await userResponse.text());
+        return NextResponse.next(); // Continue with the request if we can't verify
+      }
+      
+      const userData = await userResponse.json();
+      
+      // If user is admin, allow access to all routes
+      if (userData.role === 'admin') {
+        // If admin is on auth pages, redirect to home
+        if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')) {
+          return NextResponse.redirect(new URL('/', req.url));
         }
-        
-        // For non-admin users, check if they have completed onboarding
-        if (!userData.graduationYear && !pathname.startsWith('/onboarding')) {
+        return NextResponse.next();
+      }
+      
+      // For non-admin users, check if they have completed onboarding
+      if (!userData.graduationYear) {
+        if (!pathname.startsWith('/onboarding')) {
           return NextResponse.redirect(new URL('/onboarding', req.url));
         }
-        
-        // Check verification status for non-admin users who have completed onboarding
-        if (userData.graduationYear) {
-          const verificationResponse = await fetch(`${baseUrl}/api/auth/check-verification`, {
-            headers: {
-              'Cookie': req.headers.get('cookie') || ''
-            }
-          });
-          
-          if (verificationResponse.ok) {
-            const { isVerified } = await verificationResponse.json();
-            
-            // Redirect unverified users to waiting-verification page
-            if (!isVerified && !pathname.startsWith('/waiting-verification')) {
-              return NextResponse.redirect(new URL('/waiting-verification', req.url));
-            }
-            
-            // Redirect verified users away from waiting-verification page
-            if (isVerified && pathname.startsWith('/waiting-verification')) {
-              return NextResponse.redirect(new URL('/', req.url));
-            }
-            
-            // Redirect verified users away from onboarding
-            if (isVerified && pathname.startsWith('/onboarding')) {
-              return NextResponse.redirect(new URL('/', req.url));
-            }
-            
-            // Allow access to the requested page
-            return NextResponse.next();
-          }
+        return NextResponse.next();
+      }
+      
+      // If user has completed onboarding but is not verified
+      if (!userData.isVerified) {
+        if (!pathname.startsWith('/waiting-verification')) {
+          return NextResponse.redirect(new URL('/waiting-verification', req.url));
         }
+        return NextResponse.next();
+      }
+      
+      // If user is verified, redirect away from onboarding/waiting pages
+      if (pathname.startsWith('/waiting-verification') || pathname.startsWith('/onboarding')) {
+        return NextResponse.redirect(new URL('/', req.url));
       }
     } catch (error) {
       console.error('Error in middleware:', error);
