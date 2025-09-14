@@ -8,11 +8,15 @@ export default authMiddleware({
     "/sign-in(.*)",
     "/sign-up(.*)",
     "/waiting-verification",
+    "/waiting-verification(.*)",
+    "/onboarding",
+    "/onboarding(.*)",
     "/api/webhook(.*)",
     "/api/uploadthing",
-    "/api/users/check-onboarding", // Allow onboarding check without auth
-    "/api/users/user_(.*)", // Allow user profile access without auth for public profiles
-    "/api/auth/check-verification" // Allow verification check
+    "/api/users/check-onboarding",
+    "/api/users/user_(.*)",
+    "/api/auth/check-verification",
+    "/api/health"
   ],
   ignoredRoutes: [
     "/api/webhook(.*)",
@@ -60,12 +64,24 @@ export default authMiddleware({
 
     // User is signed in
     try {
-      const baseUrl = `${url.protocol}//${url.host}`;
-      
       // Skip verification for API routes and public paths
       if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
         return NextResponse.next();
       }
+
+      // In production, use the host from the headers (Railway proxy)
+      // In development, use the local URL
+      const baseUrl = process.env.NODE_ENV === 'production'
+        ? `https://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alumni-connection-platform-production.up.railway.app'}`
+        : `${url.protocol}//${url.host}`;
+      
+      console.log('Middleware processing:', { 
+        pathname, 
+        baseUrl, 
+        env: process.env.NODE_ENV,
+        host: req.headers.get('host'),
+        xForwardedHost: req.headers.get('x-forwarded-host')
+      });
       
       // Get user data from the database
       const userResponse = await fetch(`${baseUrl}/api/users/${auth.userId}`, {
@@ -77,8 +93,19 @@ export default authMiddleware({
       });
       
       if (!userResponse.ok) {
-        console.error('Failed to fetch user data:', await userResponse.text());
-        return NextResponse.next(); // Continue with the request if we can't verify
+        const errorText = await userResponse.text().catch(() => 'Failed to read error response');
+        console.error('Failed to fetch user data:', {
+          status: userResponse.status,
+          statusText: userResponse.statusText,
+          error: errorText,
+          url: `${baseUrl}/api/users/${auth.userId}`
+        });
+        // In production, allow the request to continue to prevent redirect loops
+        if (process.env.NODE_ENV === 'production') {
+          return NextResponse.next();
+        }
+        // In development, be more strict to catch issues
+        return NextResponse.redirect(new URL('/sign-in', req.url));
       }
       
       const userData = await userResponse.json();
