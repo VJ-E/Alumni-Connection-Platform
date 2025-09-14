@@ -5,9 +5,15 @@ import Navbar from './Navbar';
 
 const NavbarWrapper = () => {
     const pathname = usePathname();
-    const isAuthPage = pathname?.startsWith('/sign-in') || pathname?.startsWith('/sign-up');
+    // Hide navbar on auth, onboarding, and waiting-verification pages
+    const hideNavbar = [
+        '/sign-in',
+        '/sign-up',
+        '/onboarding',
+        '/waiting-verification'
+    ].some(route => pathname?.startsWith(route));
 
-    if (isAuthPage) {
+    if (hideNavbar) {
         return null;
     }
 

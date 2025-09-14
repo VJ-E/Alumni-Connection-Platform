@@ -20,6 +20,18 @@ export default function MobileBottomNav() {
   const { user } = useUser();
   const { profile } = useCurrentUserProfile(user?.id);
 
+  // Hide mobile nav on auth, onboarding, and waiting-verification pages
+  const hideMobileNav = [
+    '/sign-in',
+    '/sign-up',
+    '/onboarding',
+    '/waiting-verification'
+  ].some(route => pathname?.startsWith(route));
+
+  if (hideMobileNav) {
+    return null;
+  }
+
   const isActive = (path: string) => {
     return pathname === path;
   };

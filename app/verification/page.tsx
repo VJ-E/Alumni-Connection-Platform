@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -293,11 +294,16 @@ export default function VerificationPage() {
                     <div className="space-y-4">
                       <h4 className="font-medium">Verification Document</h4>
                       <div className="border rounded-lg overflow-hidden">
-                        <img
-                          src={selectedUser.verificationDocument}
-                          alt="Verification document"
-                          className="w-full h-auto max-h-[400px] object-contain"
-                        />
+                        <div className="relative w-full h-[400px]">
+                          <Image
+                            src={selectedUser.verificationDocument}
+                            alt="Verification document"
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+                            priority
+                          />
+                        </div>
                       </div>
                       <div className="flex justify-end gap-2">
                         <Button

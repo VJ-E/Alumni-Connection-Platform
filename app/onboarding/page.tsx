@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -11,13 +11,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
+// Define the form data type
+interface FormData {
+  firstName: string;
+  lastName: string;
+  graduationYear: string;
+  department: string;
+  major: string;
+  description: string;
+  linkedInUrl: string;
+  githubUrl: string;
+}
+
 export default function OnboardingPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
     graduationYear: '',
     department: '',
     major: '',
@@ -27,6 +40,59 @@ export default function OnboardingPage() {
   });
   const [verificationImage, setVerificationImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Initialize form data when user is loaded
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
+      }));
+    }
+  }, [user]);
+
+  // Check if user has already completed onboarding
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!isLoaded || !user) return;
+      
+      try {
+        setCheckingStatus(true);
+        const response = await fetch(`/api/users/${user.id}`);
+        if (response.ok) {
+          const userData = await response.json();
+          
+          // If user has already completed onboarding, redirect to waiting-verification
+          if (userData.graduationYear) {
+            router.push('/waiting-verification');
+            return;
+          }
+          
+          // If user is already verified, redirect to home
+          if (userData.isVerified) {
+            router.push('/');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [isLoaded, user, router]);
+
+  // Show loading state while checking onboarding status
+  if (checkingStatus) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
