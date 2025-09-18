@@ -49,7 +49,13 @@ interface SafePost {
     updatedAt: string;
 }
 
-const Post = ({ post }: { post: SafePost }) => {
+interface PostProps {
+    post: SafePost;
+    onLike?: () => void;
+    onComment?: (comment: any) => void;
+}
+
+const Post = ({ post, onLike, onComment }: PostProps) => {
   const { user } = useUser();
   const fullName = post?.user?.firstName + " " + post?.user?.lastName;
   const loggedInUser = user?.id === post?.user?.userId;
@@ -114,7 +120,11 @@ const Post = ({ post }: { post: SafePost }) => {
             </div>
           </div>
           <PostContent post={post} />
-          <SocialOptions post={post} />
+          <SocialOptions 
+            post={post} 
+            onLike={onLike}
+            onComment={onComment}
+          />
         </div>
       </div>
     </div>

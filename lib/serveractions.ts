@@ -135,64 +135,83 @@ const serializeDocument = (doc: any): SafePost | null => {
     };
 };
 
-// get all post using server actions
-export const getAllPosts = async (): Promise<SafePost[]> => {
+// get all posts using server actions with pagination
+export const getAllPosts = async (department?: string, limit: number = 10, skip: number = 0): Promise<{posts: SafePost[], hasMore: boolean}> => {
     try {
         await connectDB();
-        const posts = await Post.find()
+        
+        // Validate inputs
+        const validatedLimit = Math.min(Math.max(1, limit), 20); // Ensure limit is between 1 and 20
+        const validatedSkip = Math.max(0, skip); // Ensure skip is not negative
+        
+        // Build the query with department filter if provided
+        const query: any = {};
+        if (department && department !== 'all') {
+            // Find users in the specified department
+            const usersInDepartment = await User.find({ 
+                department: department === 'CSE(AI&ML)' ? 'CSE(AI&ML)' : 
+                            department === 'AI&DS' ? 'AI&DS' :
+                            department === 'CSBS' ? 'CSBS' : 'CSE' 
+            }).select('userId').lean();
+            
+            if (usersInDepartment.length > 0) {
+                const userIds = usersInDepartment.map(user => user.userId);
+                query['user.userId'] = { $in: userIds };
+            } else {
+                // If no users found in the department, return empty result
+                return { posts: [], hasMore: false };
+            }
+        }
+        
+        // Get total count of matching posts for pagination
+        const totalPosts = await Post.countDocuments(query);
+        const hasMore = totalPosts > validatedSkip + validatedLimit;
+        
+        // If skip is beyond total posts, return empty array
+        if (validatedSkip >= totalPosts) {
+            return { posts: [], hasMore: false };
+        }
+        
+        // Fetch posts with pagination
+        const posts = await Post.find(query)
             .sort({ createdAt: -1 })
+            .skip(validatedSkip)
+            .limit(validatedLimit)
+            .populate({
+                path: 'user',
+                model: User,
+                select: 'userId firstName lastName email profilePhoto department description graduationYear linkedInUrl role'
+            })
             .populate({ 
                 path: 'comments', 
-                options: { sort: { createdAt: -1 } }
+                options: { sort: { createdAt: -1 } },
+                populate: {
+                    path: 'user',
+                    model: User,
+                    select: 'userId firstName lastName email profilePhoto department description graduationYear linkedInUrl role'
+                }
             })
             .lean()
             .exec();
-        
-        if(!posts) return [];
-        
-        // For each post, get the latest user data
-        const postsWithUpdatedUserData = await Promise.all(posts.map(async (post) => {
-            try {
-                // Get the latest user data
-                const userProfile = await User.findOne({ userId: post.user?.userId }).lean();
-                if (userProfile) {
-                    // Keep all existing user data and only update graduationYear
-                    post.user = {
-                        userId: post.user.userId,
-                        firstName: post.user.firstName,
-                        lastName: post.user.lastName,   
-                        email: post.user.email,
-                        profilePhoto: post.user.profilePhoto,
-                        department: post.user.department,
-                        major: post.user.major || userProfile.major || "",
-                        description: post.user.description || "",
-                        graduationYear: userProfile.graduationYear,
-                        linkedInUrl: userProfile.linkedInUrl || "",
-                        isVerified: userProfile.isVerified || false,
-                        verificationDocument: userProfile.verificationDocument || "",
-                        githubUrl: userProfile.githubUrl || "",
-                        role: userProfile.role || "student"
-                    };
-                }
-                return post;
-            } catch (error) {
-                console.error('Error updating user data for post:', error);
-                // Return original post if there's an error
-                return post;
-            }
-        }));
+            
+        if (!posts || posts.length === 0) {
+            return { posts: [], hasMore: false };
+        }
         
         // Safely serialize all posts and their nested data
-        const safePosts = postsWithUpdatedUserData
+        const safePosts = posts
             .filter(post => post && post.user) // Make sure we have valid posts with user data
             .map(post => serializeDocument(post))
             .filter((post): post is SafePost => post !== null);
         
-        return safePosts;
+        return { 
+            posts: safePosts, 
+            hasMore 
+        };
         
     } catch (error) {
         console.error('Error in getAllPosts:', error);
-        return [];
+        return { posts: [], hasMore: false };
     }
 }
 
@@ -949,3 +968,32 @@ export const uploadChatImage = async (imageData: string) => {
         throw new Error(error.message || 'Failed to upload image');
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

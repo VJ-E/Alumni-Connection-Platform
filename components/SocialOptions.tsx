@@ -9,45 +9,20 @@ import Comments from "./Comments";
 import { toast } from "react-toastify";
 import { useOnlineStatus } from "./OfflineIndicator";
 
-interface SafePost {
-  _id: string;
-  description: string;
-  user: {
-    userId: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    profilePhoto: string;
-    description: string;
-    graduationYear: number | null;
-  };
-  imageUrl?: string;
-  likes?: string[];
-  comments?: Array<{
-    _id: string;
-    textMessage: string;
-    user: {
-      userId: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      profilePhoto: string;
-      description: string;
-      graduationYear: number | null;
-    };
-    createdAt: string;
-    updatedAt: string;
-  }>;
-  createdAt: string;
-  updatedAt: string;
+import { SafePost } from "./Posts";
+
+interface SocialOptionsProps {
+    post: SafePost;
+    onLike?: () => void;
+    onComment?: (comment: any) => void;
 }
 
-const SocialOptions = ({ post }: { post: SafePost }) => {
+const SocialOptions = ({ post, onLike, onComment }: SocialOptionsProps) => {
   const { user } = useUser();
   const [showComments, setShowComments] = useState(false);
   const [isLiked, setIsLiked] = useState(post.likes?.includes(user?.id || '') || false);
-  const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [likeCount, setLikeCount] = useState<number>(post.likes?.length || 0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const isOnline = useOnlineStatus();
 
   const handleLike = async () => {
@@ -58,23 +33,27 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
     if (isLoading) return;
 
     if (!isOnline) {
-      toast.error("You are offline. Please check your connection and try again.");
+      toast.error("You are currently offline. Please check your internet connection.");
       return;
     }
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       if (isLiked) {
         await dislikePostAction(post._id);
-        setLikeCount(prev => Math.max(0, prev - 1));
+        setLikeCount((prev: number) => Math.max(0, prev - 1));
       } else {
         await likePostAction(post._id);
-        setLikeCount(prev => prev + 1);
+        setLikeCount((prev: number) => prev + 1);
       }
       setIsLiked(!isLiked);
+      // Call the onLike callback if provided
+      if (onLike) {
+        onLike();
+      }
     } catch (error) {
-      console.error('Error handling like:', error);
-      toast.error('Failed to update like status');
+      console.error("Error toggling like:", error);
+      toast.error("Failed to update like. Please try again.");
     } finally {
       setIsLoading(false);
     }

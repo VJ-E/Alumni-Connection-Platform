@@ -38,19 +38,29 @@ export default authMiddleware({
   afterAuth: async (auth, req) => {
     const url = req.nextUrl;
     const pathname = url.pathname;
-    const isPublicRoute = [
-      '/sign-in(.*)',
-      '/sign-up(.*)',
-      '/waiting-verification',
-      '/onboarding'
-    ].some(route => new RegExp(`^${route}$`).test(pathname));
-
-    // Skip verification check for public routes, API routes, and static files
-    if (pathname.startsWith('/api/') || 
-        pathname.startsWith('/_next/') || 
-        pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|json|css|js)$/)) {
+    
+    // Skip middleware for API routes, _next, and static files
+    if (
+      pathname.startsWith('/api/') || 
+      pathname.startsWith('/_next/') || 
+      pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|json|css|js)$/)
+    ) {
       return NextResponse.next();
     }
+
+    const isPublicRoute = [
+      '^/sign-in(?:/.*)?$',
+      '^/sign-up(?:/.*)?$',
+      '^/waiting-verification(?:/.*)?$',
+      '^/onboarding(?:/.*)?$',
+      '^/$',  // Add home to public routes to prevent redirect loops
+      '^/people(?:/.*)?$',  // Add people page to public routes
+      '^/opportunities(?:/.*)?$',  // Add opportunities page to public routes
+      '^/messages(?:/.*)?$',  // Add messages page to public routes
+      '^/profile(?:/.*)?$',  // Add profile page to public routes
+      '^/api/users/check-onboarding(?:/.*)?$',
+      '^/api/auth/check-verification(?:/.*)?$'
+    ].some(route => new RegExp(route).test(pathname));
 
     // If user is not signed in and route is not public, redirect to sign-in
     if (!auth.userId) {
@@ -62,13 +72,12 @@ export default authMiddleware({
       return NextResponse.next();
     }
 
-    // User is signed in
-    try {
-      // Skip verification for API routes and public paths
-      if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
-        return NextResponse.next();
-      }
+    // User is signed in - handle authenticated requests
+    if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
+      return NextResponse.next();
+    }
 
+    try {
       // In production, use the host from the headers (Railway proxy)
       // In development, use the local URL
       const baseUrl = process.env.NODE_ENV === 'production'
@@ -89,27 +98,24 @@ export default authMiddleware({
           'Cookie': req.headers.get('cookie') || ''
         },
         // Important: Don't cache this request
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'same-origin'
       });
-      
+
       if (!userResponse.ok) {
-        const errorText = await userResponse.text().catch(() => 'Failed to read error response');
-        console.error('Failed to fetch user data:', {
-          status: userResponse.status,
-          statusText: userResponse.statusText,
-          error: errorText,
-          url: `${baseUrl}/api/users/${auth.userId}`
-        });
-        // In production, allow the request to continue to prevent redirect loops
-        if (process.env.NODE_ENV === 'production') {
+        console.error('Failed to fetch user data:', await userResponse.text());
+        // Allow access to public routes even if user data fetch fails
+        if (isPublicRoute) {
           return NextResponse.next();
         }
-        // In development, be more strict to catch issues
-        return NextResponse.redirect(new URL('/sign-in', req.url));
+        // Only redirect to sign-in for protected routes
+        const signInUrl = new URL('/sign-in', req.url);
+        signInUrl.searchParams.set('redirect_url', pathname);
+        return NextResponse.redirect(signInUrl);
       }
       
       const userData = await userResponse.json();
-      
+
       // If user is admin, allow access to all routes
       if (userData.role === 'admin') {
         // If admin is on auth pages, redirect to home
@@ -139,16 +145,14 @@ export default authMiddleware({
       if (pathname.startsWith('/waiting-verification') || pathname.startsWith('/onboarding')) {
         return NextResponse.redirect(new URL('/', req.url));
       }
+      
+      return NextResponse.next();
     } catch (error) {
       console.error('Error in middleware:', error);
-      // In case of error, redirect to sign-in to be safe
-      const signInUrl = new URL('/sign-in', req.url);
-      return NextResponse.redirect(signInUrl);
+      // In case of error, allow the request to continue to prevent redirect loops
+      return NextResponse.next();
     }
-    
-    // If not signed in and route is protected, Clerk will handle 401 → redirect via publicRoutes
-    return NextResponse.next();
-  }
+   }
 });
 
 // Stop Middleware running on static files and public folder

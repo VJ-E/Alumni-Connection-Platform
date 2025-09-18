@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import ProfilePhoto from "./shared/ProfilePhoto";
 import { Button } from "./ui/button";
 import { getAllUsers, sendConnectionRequest, getConnectionStatus } from "@/lib/serveractions";
@@ -8,20 +9,72 @@ import { IUser, Department } from "@/models/user.model";
 import Link from "next/link";
 import { SearchIcon } from "lucide-react";
 import { Input } from "./ui/input";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { Badge } from "./ui/badge";
 import { useOnlineStatus } from "./OfflineIndicator";
+import DepartmentFilter from "./DepartmentFilter";
 
 type UserType = 'all' | 'student' | 'alumni' | 'admin';
 
+// Map department values to display names
+const departmentDisplayNames: Record<Department, string> = {
+  'CSE(AI&ML)': 'CSE (AI & ML)',
+  'CSE': 'Computer Science',
+  'CSBS': 'Computer Science & Business Systems',
+  'AI&DS': 'AI & Data Science',
+  '': 'Not Specified'
+};
+
 export default function PeopleList({ currentUser }: { currentUser: any }) {
   const [users, setUsers] = useState<IUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({});
   const [processingConnections, setProcessingConnections] = useState<Record<string, boolean>>({});
   const [selectedTab, setSelectedTab] = useState<UserType>('all');
+  const searchParams = useSearchParams();
+  const selectedDepartment = searchParams?.get('dept') as Department || 'all';
   const isOnline = useOnlineStatus();
+
+  // Filter users based on search term, selected tab, and department
+  useEffect(() => {
+    if (!users.length) return;
+    
+    let result = [...users];
+    
+    // Filter by search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const getDepartmentDisplayName = (dept: Department): string => {
+        return departmentDisplayNames[dept] || dept || 'Not Specified';
+      };
+      result = result.filter(
+        (user) =>
+          user.firstName.toLowerCase().includes(searchLower) ||
+          user.lastName.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower) ||
+          (user.department && getDepartmentDisplayName(user.department).toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Filter by user type (tab)
+    if (selectedTab !== 'all') {
+      result = result.filter((user) => {
+        if (selectedTab === 'alumni') return user.role === 'alumni';
+        if (selectedTab === 'student') return user.role === 'student';
+        if (selectedTab === 'admin') return user.role === 'admin';
+        return true;
+      });
+    }
+    
+    // Filter by department
+    if (selectedDepartment !== 'all') {
+      result = result.filter((user) => user.department === selectedDepartment);
+    }
+    
+    setFilteredUsers(result);
+  }, [users, searchTerm, selectedTab, selectedDepartment]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -36,6 +89,7 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
           }));
           
         setUsers(otherUsers as IUser[]);
+        setFilteredUsers(otherUsers as IUser[]);
 
         // Fetch connection status for each user
         const statuses: Record<string, string> = {};
@@ -122,86 +176,49 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
 
   const currentYear = new Date().getFullYear();
 
-  const filteredUsers = users.filter((user) => {
-    const nameMatches = `${user.firstName} ${user.lastName}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    if (!nameMatches) return false;
-
-    // Make sure graduationYear exists and is a number
-    const graduationYear = user.graduationYear ? Number(user.graduationYear) : null;
-
-    switch (selectedTab) {
-      case 'student':
-        return graduationYear !== null && graduationYear > currentYear;
-      case 'alumni':
-        return graduationYear !== null && graduationYear <= currentYear;
-      case 'admin':
-        return user.role === 'admin';
-      default:
-        return true;
-    }
-  });
+  const getDepartmentDisplayName = (dept: Department): string => {
+    return departmentDisplayNames[dept] || dept || 'Not Specified';
+  };
 
   if (loading) {
     return <div className="text-center py-4">Loading...</div>;
   }
 
-  const tabs = [
-    { id: 'all' as const, label: 'All', count: users.length },
-    { 
-      id: 'student' as const, 
-      label: 'Students', 
-      count: users.filter(u => u.graduationYear && u.graduationYear > currentYear).length 
-    },
-    { 
-      id: 'alumni' as const, 
-      label: 'Alumni', 
-      count: users.filter(u => u.graduationYear && u.graduationYear <= currentYear).length 
-    },
-  ];
-
   return (
     <div className="pb-4">
       <div className="sticky top-[4rem] z-10 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="p-2 sm:p-4">
-          <div className="relative mb-2 sm:mb-3">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search people..."
-              className="pl-10 bg-background w-full text-sm sm:text-base"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="relative">
-            <div className="flex overflow-x-auto no-scrollbar pb-1 -mx-1">
-              <div className="flex flex-nowrap gap-1.5 sm:gap-2 px-1">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSelectedTab(tab.id)}
-                    className={`px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap rounded-full transition-colors flex items-center gap-1.5
-                      ${selectedTab === tab.id 
-                        ? 'bg-accent text-accent-foreground font-medium' 
-                        : 'text-foreground/80 hover:bg-accent/50 hover:text-foreground'}`}
+        <div className="mb-6 flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="relative w-full sm:w-80">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by name, email, or department..."
+                className="pl-10 w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                {(['all', 'student', 'alumni', 'admin'] as UserType[]).map((tab) => (
+                  <Button
+                    key={tab}
+                    variant={selectedTab === tab ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full capitalize whitespace-nowrap"
+                    onClick={() => setSelectedTab(tab)}
                   >
-                    {tab.label}
-                    <span className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 text-xs rounded-full ${
-                      selectedTab === tab.id ? 'bg-accent-foreground/20' : 'bg-muted'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  </button>
+                    {tab}
+                  </Button>
                 ))}
               </div>
+              <div className="hidden sm:block h-6 w-px bg-border mx-1" />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Department:</span>
+                <DepartmentFilter variant="dropdown" />
+              </div>
             </div>
-            {/* Gradient fade effect for the right edge */}
-            {/* <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-16 pointer-events-none" style={{
-              background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 80%)'
-            }} /> */}
           </div>
         </div>
       </div>
@@ -216,11 +233,11 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
               key={user.userId}
               className="bg-card text-card-foreground p-4 sm:p-6 rounded-lg border border-border flex flex-col items-center hover:shadow-md transition-shadow"
             >
-              {/* <ProfilePhoto src={user.profilePhoto || "/default-avatar.png"} /> */}
               <ProfilePhoto src={user.profilePhoto} userId={user.userId} />
-              <h2 className="mt-4 font-semibold text-lg text-foreground">
-                {user.firstName} {user.lastName}
-              </h2>
+              <div className="text-sm text-muted-foreground">
+                {getDepartmentDisplayName(user.department)}
+                {user.graduationYear && ` • Class of ${user.graduationYear}`}
+              </div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant={user.role === 'admin' ? "default" : isAlumni ? "default" : "secondary"}>
                   {user?.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}

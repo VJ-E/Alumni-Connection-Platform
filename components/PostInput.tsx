@@ -8,7 +8,11 @@ import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
 import { useUser } from "@clerk/nextjs";
 import { useOnlineStatus } from "./OfflineIndicator";
 
-const PostInput = () => {
+interface PostInputProps {
+    onNewPost?: (post: any) => void;
+}
+
+const PostInput = ({ onNewPost }: PostInputProps) => {
   const { user } = useUser();
   const { profile } = useCurrentUserProfile(user?.id);
   const [open, setOpen] = useState<boolean>(false);
