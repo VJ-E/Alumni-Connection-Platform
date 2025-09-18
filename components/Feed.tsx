@@ -57,9 +57,6 @@ interface FeedProps {
 }
 
 const Feed = ({ user }: FeedProps) => {
-    if (!user) {
-        return <div className="text-center py-4 text-foreground">Please sign in to view posts.</div>;
-    }
     const [posts, setPosts] = useState<SafePost[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -189,7 +186,7 @@ const Feed = ({ user }: FeedProps) => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [department, hasMore, isOnline, loading, loadingMore, posts.length]);
+    }, [department, hasMore, loading, loadingMore, posts.length]);
 
     // Effect for initial load and filter changes
     useEffect(() => {
@@ -197,14 +194,14 @@ const Feed = ({ user }: FeedProps) => {
         setPage(1);
         setHasMore(true);
         fetchPosts(1, true);
-    }, [department, selectedTab, isOnline]);
+    }, [department, selectedTab, isOnline, fetchPosts]);
 
     // Effect for loading more posts
     useEffect(() => {
         if (page > 1) {
             fetchPosts(page);
         }
-    }, [page]);
+    }, [page, fetchPosts]);
 
     // Infinite scroll with intersection observer
     useEffect(() => {
@@ -274,55 +271,60 @@ const Feed = ({ user }: FeedProps) => {
 
     return (
         <div className="max-w-2xl mx-auto w-full px-4 py-4">
-            {user && <PostInput onNewPost={handleNewPost} />}
-            
-            <div className="mt-4 mb-6">
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        {(['all', 'student', 'alumni'] as const).map((tab) => (
-                            <button
-                                key={tab}
-                                className={`px-3 py-1.5 text-sm rounded-full capitalize transition-colors ${
-                                    selectedTab === tab
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                                }`}
-                                onClick={() => setSelectedTab(tab)}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="hidden sm:block h-6 w-px bg-border mx-1" />
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">Department:</span>
-                        <DepartmentFilter variant="dropdown" />
-                    </div>
-                </div>
-            </div>
-            
-            {loading ? (
-                <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                </div>
+            {!user ? (
+                <div className="text-center py-4 text-foreground">Please sign in to view posts.</div>
             ) : (
                 <>
-                    <Posts posts={posts.filter(filterPost)} onLike={handleLike} onComment={handleComment} />
-                    {loadingMore && (
-                        <div className="flex justify-center py-4">
-                            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                    <PostInput onNewPost={handleNewPost} />
+                    <div className="mt-4 mb-6">
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                {(['all', 'student', 'alumni'] as const).map((tab) => (
+                                    <button
+                                        key={tab}
+                                        className={`px-3 py-1.5 text-sm rounded-full capitalize transition-colors ${
+                                            selectedTab === tab
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                        }`}
+                                        onClick={() => setSelectedTab(tab)}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="hidden sm:block h-6 w-px bg-border mx-1" />
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">Department:</span>
+                                <DepartmentFilter variant="dropdown" />
+                            </div>
                         </div>
-                    )}
-                    <div ref={loadMoreRef} className="h-1" />
-                    {!hasMore && posts.length > 0 && (
-                        <div className="text-center py-4 text-muted-foreground text-sm">
-                            You've reached the end of the feed
+                    </div>
+
+                    {loading ? (
+                        <div className="flex justify-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                         </div>
-                    )}
-                    {!loading && posts.length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground">
-                            No posts found. Be the first to post something!
-                        </div>
+                    ) : (
+                        <>
+                            <Posts posts={posts.filter(filterPost)} onLike={handleLike} onComment={handleComment} />
+                            {loadingMore && (
+                                <div className="flex justify-center py-4">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                                </div>
+                            )}
+                            <div ref={loadMoreRef} className="h-1" />
+                            {!hasMore && posts.length > 0 && (
+                                <div className="text-center py-4 text-muted-foreground text-sm">
+                                    You&apos;ve reached the end of the feed
+                                </div>
+                            )}
+                            {!loading && posts.length === 0 && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    No posts found. Be the first to post something!
+                                </div>
+                            )}
+                        </>
                     )}
                 </>
             )}

@@ -4,7 +4,7 @@ import ProfilePhoto from "./shared/ProfilePhoto";
 import { getAllPosts } from "@/lib/serveractions";
 
 const Sidebar = async ({ user }: { user: any }) => {
-  const posts = await getAllPosts();
+  const { posts } = await getAllPosts();
   return (
     <div className="hidden md:block w-[20%] h-fit border border-border bg-card text-card-foreground rounded-lg">
       <div className="flex relative flex-col items-center">
