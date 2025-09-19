@@ -82,7 +82,7 @@ const Feed = ({ user }: { user: SafeUser | null }) => {
 
     return (
         <div className='flex-1'>
-            <PostInput user={user}/>
+            <PostInput />
             {loading ? (
                 <div className="text-center py-4">Loading posts...</div>
             ) : (
