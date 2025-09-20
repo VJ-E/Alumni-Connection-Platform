@@ -195,9 +195,19 @@ export default function OpportunitiesPage() {
     <div className="flex flex-col md:flex-row w-full gap-4 p-4 min-h-screen bg-gray-100">
       <div className="w-full md:w-3/4">
         <Card className="p-4">
+          <div className="flex justify-end mb-4">
+            {isAlumni && (
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => setIsAddEventOpen(true)}
+              >
+                + Add Event
+              </button>
+            )}
+          </div>
           <div className="calendar-container">
             <Calendar
-              onClickDay={handleDateClick}
+              onClickDay={setSelectedDate}
               value={selectedDate}
               tileContent={tileContent}
               className="w-full rounded-lg shadow-lg"
