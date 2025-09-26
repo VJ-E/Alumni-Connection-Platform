@@ -186,7 +186,8 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
               key={user.userId}
               className="bg-white p-6 rounded-lg border border-gray-300 flex flex-col items-center"
             >
-              <ProfilePhoto src={user.profilePhoto || "/default-avatar.png"} />
+              {/* <ProfilePhoto src={user.profilePhoto || "/default-avatar.png"} /> */}
+              <ProfilePhoto src={user.profilePhoto} userId={user.userId} />
               <h2 className="mt-4 font-semibold text-lg">
                 {user.firstName} {user.lastName}
               </h2>

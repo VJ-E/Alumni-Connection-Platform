@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchInput from './SearchInput';
 import NavItems from './NavItems';
 import { SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
@@ -17,12 +17,17 @@ import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Menu } from "lucide-react"; // hamburger icon
 import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
 const Navbar = () => {
   const router = useRouter();
   const { user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { profile } = useCurrentUserProfile(user?.id);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   return (
     <div className="fixed w-full bg-white z-50 shadow-sm">
       <div className="flex items-center max-w-6xl justify-between h-14 mx-auto px-3">
@@ -31,17 +36,35 @@ const Navbar = () => {
           <Image
             src={"/kit_logo.png"}
             alt="Logo"
-            width={60}
-            height={60}
+            width={50}
+            height={50}
           />
-          <div className="hidden md:block">
+          <h1 className="text-2xl font-bold hidden md:block">Alumni Connection</h1>
+          {/* <div className="hidden md:block">
             <SearchInput />
-          </div>
+          </div> */}
         </div>
 
         {/* Desktop Nav + Profile */}
         <div className="hidden md:flex items-center gap-5">
           <NavItems />
+          {/* Theme toggle button - only render after mount to avoid hydration mismatch */}
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Toggle theme"
+              className="transition-colors duration-300"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <span className="sr-only">Toggle theme</span>
+              {theme === "dark" ? (
+                <Sun className="h-6 w-6 text-yellow-400 transition-transform duration-300 rotate-0 scale-100" />
+              ) : (
+                <Moon className="h-6 w-6 text-gray-800 transition-transform duration-300 rotate-0 scale-100" />
+              )}
+            </Button>
+          )}
           <SignedIn>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -55,7 +78,7 @@ const Navbar = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <Link href="/profile">
+                <Link href={user ? `/profile/${user.id}` : "/profile"}>
                   <DropdownMenuItem className="cursor-pointer">
                     View Profile
                   </DropdownMenuItem>
