@@ -9,7 +9,7 @@ import { updateProfile } from "@/lib/serveractions";
 import Image from "next/image";
 import { toast } from "react-toastify";
 
-export default function ProfileForm({ initialData }: { initialData: IUser }) {
+export default function ProfileForm({ initialData, readOnly = false }: { initialData: IUser, readOnly?: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -84,7 +84,9 @@ export default function ProfileForm({ initialData }: { initialData: IUser }) {
               <p className="text-gray-600">Batch of {initialData.graduationYear}</p>
             </div>
           </div>
+          {!readOnly && (
           <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+          )}
         </div>
 
         <div className="space-y-4">
