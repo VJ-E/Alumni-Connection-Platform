@@ -178,18 +178,19 @@ export default function ChatWindow({
   };
 
   const sendMessage = async (receiverId: string, content: string, imageUrl?: string): Promise<IMessage | null> => {
+    const tempId = new mongoose.Types.ObjectId().toString();
+    const tempMessage: IMessage = {
+      _id: tempId,
+      senderId: currentUser.userId,
+      receiverId,
+      content,
+      imageUrl,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+      __v: 0
+    } as unknown as IMessage;
+
     try {
-      const tempId = new mongoose.Types.ObjectId().toString();
-      const tempMessage: IMessage = {
-        _id: tempId,
-        senderId: currentUser.userId,
-        receiverId,
-        content,
-        imageUrl,
-        createdAt: new Date().toISOString(),
-        isOptimistic: true,
-        __v: 0
-      } as unknown as IMessage;
 
       // Optimistic update
       setMessages(prev => [...prev, tempMessage]);
