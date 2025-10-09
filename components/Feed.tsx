@@ -101,11 +101,8 @@ const Feed = ({ user }: FeedProps) => {
     const fetchPosts = useCallback(async (currentPage: number, isInitialLoad = false) => {
         if ((!isInitialLoad && !hasMore) || loading || loadingMore) return;
 
-        if (isInitialLoad) {
-            setLoading(true);
-        } else {
-            setLoadingMore(true);
-        }
+        const loadingState = isInitialLoad ? setLoading : setLoadingMore;
+        loadingState(true);
         
         setError(null);
         
@@ -135,7 +132,10 @@ const Feed = ({ user }: FeedProps) => {
             console.log(`Received ${newPosts.length} posts, hasMore: ${morePosts}`);
             
             setPosts(prevPosts => {
-                const updatedPosts = isInitialLoad ? [...newPosts] : [...prevPosts, ...newPosts];
+                // If it's the initial load, replace the posts, otherwise append
+                const updatedPosts = isInitialLoad 
+                    ? [...newPosts] 
+                    : [...prevPosts, ...newPosts];
                 console.log(`Updated posts count: ${updatedPosts.length}`);
                 return updatedPosts;
             });
@@ -186,22 +186,40 @@ const Feed = ({ user }: FeedProps) => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [department, hasMore, loading, loadingMore, posts.length]);
+    }, [department]); // Removed hasMore, loading, loadingMore, posts.length from dependencies
 
     // Effect for initial load and filter changes
     useEffect(() => {
-        setPosts([]);
-        setPage(1);
-        setHasMore(true);
-        fetchPosts(1, true);
-    }, [department, selectedTab, isOnline, fetchPosts]);
+        let isMounted = true;
+        
+        const loadInitialData = async () => {
+            if (isMounted) {
+                setPosts([]);
+                setPage(1);
+                setHasMore(true);
+                await fetchPosts(1, true);
+            }
+        };
+        
+        loadInitialData();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, [department, selectedTab, isOnline]);
 
     // Effect for loading more posts
     useEffect(() => {
-        if (page > 1) {
+        let isMounted = true;
+        
+        if (page > 1 && isMounted) {
             fetchPosts(page);
         }
-    }, [page, fetchPosts]);
+        
+        return () => {
+            isMounted = false;
+        };
+    }, [page]);
 
     // Infinite scroll with intersection observer
     useEffect(() => {
@@ -213,7 +231,11 @@ const Feed = ({ user }: FeedProps) => {
                     setPage(prevPage => prevPage + 1);
                 }
             },
-            { threshold: 0.1 }
+            { 
+                root: null,
+                rootMargin: '20px',
+                threshold: 0.1 
+            }
         );
 
         const currentRef = loadMoreRef.current;
