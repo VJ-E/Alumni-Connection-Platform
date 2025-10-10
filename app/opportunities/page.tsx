@@ -176,13 +176,13 @@ export default function OpportunitiesPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <Card className="p-6 max-w-md">
-          <h2 className="text-xl font-semibold text-red-600 mb-4">Error</h2>
-          <p className="text-gray-700">{error}</p>
+          <h2 className="text-xl font-semibold text-destructive mb-4">Error</h2>
+          <p className="text-foreground">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
           >
             Refresh Page
           </button>
@@ -192,13 +192,13 @@ export default function OpportunitiesPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row w-full gap-4 p-4 min-h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row w-full gap-4 p-4 min-h-screen bg-background">
       <div className="w-full md:w-3/4">
         <Card className="p-4">
           <div className="flex justify-end mb-4">
             {isAlumni && (
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
                 onClick={() => setIsAddEventOpen(true)}
               >
                 + Add Event
@@ -221,34 +221,34 @@ export default function OpportunitiesPage() {
       </div>
       
       <div className="w-full md:w-1/4">
-        <Card className="p-4 bg-white shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+        <Card className="p-4 bg-card shadow-lg">
+          <h2 className="text-xl font-semibold mb-4 text-card-foreground">
             Events for {format(selectedDate, 'MMMM d, yyyy')}
           </h2>
           <ScrollArea className="h-[calc(100vh-12rem)]">
             <div className="space-y-3 pr-4">
               {selectedDateEvents.length === 0 ? (
-                <p className="text-gray-500">No events scheduled for this date</p>
+                <p className="text-muted-foreground">No events scheduled for this date</p>
               ) : (
                 selectedDateEvents.map((event) => (
-                  <Card key={event._id} className="p-4 bg-white border-l-4 border-l-blue-500 shadow-md">
-                    <h3 className="font-medium text-lg text-gray-800">{event.title}</h3>
-                    <div className="text-sm text-blue-600 mt-2">
+                  <Card key={event._id} className="p-4 bg-card border-l-4 border-l-primary shadow-md">
+                    <h3 className="font-medium text-lg text-card-foreground">{event.title}</h3>
+                    <div className="text-sm text-primary mt-2">
                       {event.startTime} - {event.endTime}
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{event.description}</p>
                     {event.link && (
                       <a 
                         href={event.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-800 mt-2 block"
+                        className="text-sm text-primary hover:text-primary/80 mt-2 block transition-colors"
                       >
                         Apply Now →
                       </a>
                     )}
-                    <div className="text-xs text-gray-500 mt-3 flex items-center">
-                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2" />
+                    <div className="text-xs text-muted-foreground/80 mt-3 flex items-center">
+                      <span className="inline-block w-2 h-2 bg-primary rounded-full mr-2" />
                       Posted by {event.createdBy.name}
                     </div>
                   </Card>
@@ -272,7 +272,7 @@ export default function OpportunitiesPage() {
         .calendar-container {
           width: 100%;
           max-width: 100%;
-          background: white;
+          background: hsl(var(--card));
           border-radius: 8px;
           padding: 16px;
         }
@@ -280,7 +280,21 @@ export default function OpportunitiesPage() {
         .react-calendar {
           width: 100%;
           border: none;
-          font-family: Arial, sans-serif;
+          font-family: var(--font-sans);
+          background: transparent;
+          color: hsl(var(--foreground));
+        }
+
+        .react-calendar__navigation button {
+          color: hsl(var(--foreground));
+          background: none;
+          border: none;
+          font-weight: 600;
+        }
+
+        .react-calendar__navigation button:enabled:hover,
+        .react-calendar__navigation button:enabled:focus {
+          background-color: hsl(var(--accent));
         }
 
         .react-calendar__tile {
@@ -291,29 +305,46 @@ export default function OpportunitiesPage() {
           align-items: center;
           padding: 8px;
           position: relative;
+          color: hsl(var(--foreground));
+          background: transparent;
+          border-radius: 4px;
+        }
+
+        .react-calendar__month-view__weekdays__weekday {
+          color: hsl(var(--muted-foreground));
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          font-weight: 500;
         }
 
         .react-calendar__tile--now {
-          background: #e3f2fd !important;
+          background: hsl(var(--accent)) !important;
+          color: hsl(var(--accent-foreground));
         }
 
         .react-calendar__tile--active {
-          background: #bbdefb !important;
-          color: black !important;
+          background: hsl(var(--primary) / 0.1) !important;
+          color: hsl(var(--primary));
         }
 
         .react-calendar__tile.has-events {
           font-weight: bold;
-          color: #1976d2;
+          color: hsl(var(--primary));
         }
 
         .react-calendar__tile:enabled:hover,
         .react-calendar__tile:enabled:focus {
-          background-color: #e3f2fd;
+          background-color: hsl(var(--accent));
+          color: hsl(var(--accent-foreground));
         }
 
         .react-calendar__month-view__days__day--weekend {
-          color: #d32f2f;
+          color: hsl(var(--destructive));
+        }
+
+        .react-calendar__tile--now:enabled:hover,
+        .react-calendar__tile--now:enabled:focus {
+          background: hsl(var(--accent)) !important;
         }
       `}</style>
     </div>

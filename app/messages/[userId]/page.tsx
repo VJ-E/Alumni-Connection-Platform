@@ -23,7 +23,7 @@ export default async function ChatPage({ params }: { params: { userId: string } 
   return (
     <div className="pt-20">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg border border-gray-300 h-[calc(100vh-8rem)]">
+        <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm h-[calc(100vh-8rem)]">
           <ChatWindow currentUser={currentUserData} otherUser={otherUser} />
         </div>
       </div>
