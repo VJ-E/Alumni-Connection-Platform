@@ -10,7 +10,9 @@ export default async function UserProfilePage({ params }: { params: { userId: st
 
   if (!profile) {
     return (
-      <div className="pt-20 text-center text-red-500">User not found</div>
+      <div className="pt-20 min-h-screen bg-background flex items-center justify-center">
+        <div className="text-destructive text-lg font-medium">User not found</div>
+      </div>
     );
   }
 
@@ -18,11 +20,11 @@ export default async function UserProfilePage({ params }: { params: { userId: st
   const isCurrentUser = user && user.id === profile.userId;
   const currentUserProfile = await getUserById(user?.id || "");
   return (
-    <div className="pt-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg border border-gray-300">
+    <div className="pt-20 min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm">
           <div className="p-6">
-            <h1 className="text-2xl font-bold mb-8">Profile</h1>
+            <h1 className="text-2xl font-bold mb-8 text-foreground">Profile</h1>
             <ProfileForm initialData={profile} readOnly={!isCurrentUser && currentUserProfile?.role !== "admin"} />
           </div>
         </div>
