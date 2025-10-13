@@ -46,7 +46,7 @@ const Comments = ({ post }: { post: SafePost }) => {
   if (!user) return null;
 
   return (
-    <div className="border-t p-4 space-y-4">
+    <div className="border-t border-border p-4 space-y-4">
       <CommentInput postId={post._id} />
       
       <div className="space-y-4">
@@ -61,13 +61,13 @@ const Comments = ({ post }: { post: SafePost }) => {
               />
             </div>
             <div className="flex-1">
-              <div className="bg-gray-100 rounded-lg p-3">
+              <div className="bg-muted rounded-lg p-3">
                 <div className="font-semibold text-sm">
                   {comment.user.firstName} {comment.user.lastName}
                 </div>
-                <p className="text-sm">{comment.textMessage}</p>
+                <p className="text-sm text-foreground">{comment.textMessage}</p>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {new Date(comment.createdAt).toLocaleDateString()}
               </div>
             </div>
@@ -78,7 +78,7 @@ const Comments = ({ post }: { post: SafePost }) => {
       {post.comments && post.comments.length > 3 && (
         <button
           onClick={() => setShowAllComments(!showAllComments)}
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-sm text-primary hover:text-primary/80"
         >
           {showAllComments ? 'Show less' : `View all ${post.comments.length} comments`}
         </button>

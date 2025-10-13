@@ -100,13 +100,13 @@ export default function AddEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle>Add New Event</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium">
+            <label htmlFor="title" className="text-sm font-medium text-foreground">
               Title
             </label>
             <Input
@@ -118,7 +118,7 @@ export default function AddEventDialog({
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="date" className="text-sm font-medium">
+            <label htmlFor="date" className="text-sm font-medium text-foreground">
               Date
             </label>
             <Input
@@ -130,7 +130,7 @@ export default function AddEventDialog({
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
+            <label htmlFor="description" className="text-sm font-medium text-foreground">
               Description
             </label>
             <Textarea
@@ -143,7 +143,7 @@ export default function AddEventDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="startTime" className="text-sm font-medium">
+              <label htmlFor="startTime" className="text-sm font-medium text-foreground">
                 Start Time
               </label>
               <Input
@@ -155,7 +155,7 @@ export default function AddEventDialog({
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="endTime" className="text-sm font-medium">
+              <label htmlFor="endTime" className="text-sm font-medium text-foreground">
                 End Time
               </label>
               <Input
@@ -168,7 +168,7 @@ export default function AddEventDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <label htmlFor="link" className="text-sm font-medium">
+            <label htmlFor="link" className="text-sm font-medium text-foreground">
               Application Link
             </label>
             <Input
@@ -183,7 +183,7 @@ export default function AddEventDialog({
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSubmitting ? "Creating..." : "Add Event"}
             </Button>

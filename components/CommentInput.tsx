@@ -36,12 +36,12 @@ const CommentInput = ({ postId }: { postId: string }) => {
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder="Write a comment..."
-        className="flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       />
       <Button 
         type="submit" 
         disabled={!comment.trim() || isSubmitting}
-        className="bg-blue-500 hover:bg-blue-600 text-white"
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
       >
         {isSubmitting ? 'Posting...' : 'Post'}
       </Button>
