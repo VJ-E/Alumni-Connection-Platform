@@ -106,9 +106,9 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-border">
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search messages"
             className="pl-10"
@@ -119,7 +119,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
       </div>
 
       {connectionRequests.length > 0 && (
-        <div className="p-4 bg-gray-50">
+        <div className="p-4 bg-muted/50">
           <h2 className="font-semibold mb-4">Connection Requests</h2>
           <div className="space-y-4">
             {connectionRequests.map((request) => {
@@ -127,7 +127,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
               return (
                 <div
                   key={request._id}
-                  className="bg-white p-4 rounded-lg border flex items-center justify-between"
+                  className="bg-card text-card-foreground p-4 rounded-lg border border-border flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-4">
                     <ProfilePhoto
@@ -137,14 +137,14 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
                       <h3 className="font-medium">
                         {request.sender?.firstName} {request.sender?.lastName}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Wants to connect with you
                       </p>
                     </div>
                   </div>
                   <div className="flex space-x-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       disabled={isProcessing}
                       onClick={() => handleConnectionResponse(request._id, 'rejected')}
@@ -169,7 +169,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-2 p-4">
           {filteredUsers.length === 0 ? (
-            <p className="text-center text-gray-500 py-4">
+            <p className="text-center text-muted-foreground py-4">
               No messages yet. Connect with people to start chatting!
             </p>
           ) : (
@@ -177,7 +177,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
               <Link
                 key={user.userId}
                 href={`/messages/${user.userId}`}
-                className="flex items-center space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                className="flex items-center space-x-4 p-4 hover:bg-accent/50 rounded-lg transition-colors"
               >
                 <ProfilePhoto
                   src={user.profilePhoto || "/default-avatar.png"}
@@ -186,7 +186,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
                   <h3 className="font-medium">
                     {user.firstName} {user.lastName}
                   </h3>
-                  <p className="text-sm text-gray-500">Click to view chat</p>
+                  <p className="text-sm text-muted-foreground">Click to view chat</p>
                 </div>
               </Link>
             ))
