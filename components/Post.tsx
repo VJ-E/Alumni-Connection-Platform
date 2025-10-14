@@ -61,7 +61,7 @@ const Post = ({ post }: { post: SafePost }) => {
   }
   // console.log("role--------------------------", role,fullName);
   return (
-    <div className="bg-white my-2 mx-2 md:mx-0 rounded-lg border border-gray-300">
+    <div className="bg-card text-card-foreground my-2 mx-2 md:mx-0 rounded-lg border border-border">
       <div className="flex gap-2 p-4">
         <ProfilePhoto src={post.user.profilePhoto} userId={post.user.userId} />
         <div className="flex items-center justify-between w-full">
@@ -77,10 +77,10 @@ const Post = ({ post }: { post: SafePost }) => {
                 </Badge>
               )}
             </h1>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {typeof post.user.graduationYear === 'number' ? `Batch of ${post.user.graduationYear}` : 'Graduation year not set'}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               <ReactTimeago date={post.createdAt} />
             </p>
           </div>
