@@ -68,10 +68,10 @@ export function PostDialog({
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && setOpen(false)}>
       <DialogContent
         onInteractOutside={() => !isSubmitting && setOpen(false)}
-        className="sm:max-w-[425px]"
+        className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-card text-card-foreground"
       >
         <DialogHeader>
           <DialogTitle className="flex gap-2">
@@ -82,25 +82,29 @@ export function PostDialog({
             </div>
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={postActionHandler}>
-          <div className="flex flex-col">
+        <form onSubmit={postActionHandler} className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto">
             <Textarea
               id="postText"
               name="inputText"
               value={inputText}
               onChange={changeHandler}
-              className="border-none text-md focus-visible:ring-0"
+              className="border-none text-md focus-visible:ring-0 bg-transparent text-foreground placeholder:text-muted-foreground min-h-[100px]"
               placeholder="What do you want to share?"
               required
             />
-            <div className="my-4">
+            <div className="my-4 flex justify-center">
               {selectedFile && (
-                <Image
-                  src={selectedFile}
-                  alt="preview-image"
-                  width={400}
-                  height={400}
-                />
+                <div className="relative max-h-[50vh] w-full flex items-center justify-center overflow-hidden rounded-lg border border-border">
+                  <Image
+                    src={selectedFile}
+                    alt="preview-image"
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    className="w-auto max-w-full h-auto max-h-[50vh] object-contain"
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -129,7 +133,7 @@ export function PostDialog({
           variant={"ghost"}
           disabled={isSubmitting}
         >
-          <Images className="text-blue-500" />
+          <Images className="text-primary" />
           <p>Media</p>
         </Button>
       </DialogContent>
