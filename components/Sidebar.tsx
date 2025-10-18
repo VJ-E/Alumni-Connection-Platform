@@ -6,7 +6,7 @@ import { getAllPosts } from "@/lib/serveractions";
 const Sidebar = async ({ user }: { user: any }) => {
   const posts = await getAllPosts();
   return (
-    <div className="hidden md:block w-[20%] h-fit border bordergray-300 bg-white rounded-lg">
+    <div className="hidden md:block w-[20%] h-fit border border-border bg-card text-card-foreground rounded-lg">
       <div className="flex relative flex-col items-center">
         <div className="w-full h-16 overflow-hidden">
           {user && (
@@ -22,7 +22,7 @@ const Sidebar = async ({ user }: { user: any }) => {
         <div className="my-1 absolute top-10 left-[40%]">
           <ProfilePhoto src={user ? user?.imageUrl! : "/banner.jpg"} />
         </div>
-        <div className="border-b border-b-gray-300">
+        <div className="border-b border-border">
           <div className="p-2 mt-5 text-center">
             <h1 className="font-bold hover:underline cursor-pointer">
               {user
@@ -34,11 +34,11 @@ const Sidebar = async ({ user }: { user: any }) => {
         </div>
       </div>
       <div className="text-xs">
-        <div className="w-full flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer">
+        <div className="w-full flex justify-between items-center px-3 py-2 hover:bg-accent cursor-pointer transition-colors">
           <p>Post Impression</p>
-          <p className="text-blue-500 font-bold">88</p>
+          <p className="text-primary font-bold">88</p>
         </div>
-        <div className="w-full flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer">
+        <div className="w-full flex justify-between items-center px-3 py-2 hover:bg-accent cursor-pointer transition-colors">
           <p>Posts</p>
           <p className="text-blue-500 font-bold">{posts?.length}</p>
         </div>
