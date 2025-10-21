@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import mongoose from 'mongoose';
 
 // Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://vijay:d8PXN6jc8x2xSdXm@cluster0.cittrhd.mongodb.net/alumni-chat?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || '';
 
 // MongoDB connection
 let isConnected = false;
