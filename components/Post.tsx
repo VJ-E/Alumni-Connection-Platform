@@ -69,7 +69,7 @@ const Post = ({ post }: { post: SafePost }) => {
             <h1 className="text-sm font-bold flex items-center">
               {fullName}
               <Badge variant={"secondary"} className="ml-2">
-                {role !== "admin" ? (isAlumni ? 'Alumni' : 'Student') : 'Admin'}
+                {post.user.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
               </Badge>
               {loggedInUser && (
                 <Badge variant={"outline"} className="ml-2">
