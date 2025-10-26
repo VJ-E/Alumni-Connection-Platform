@@ -1,4 +1,4 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignUp } from "@clerk/nextjs";
 import Image from "next/image";
 
 export default function Page() {
@@ -8,7 +8,7 @@ export default function Page() {
       <div className="hidden lg:flex lg:w-1/2 relative">
         <Image
           src="/login-banner.jpg"
-          alt="Login Banner"
+          alt="Sign Up Banner"
           fill
           className="object-cover"
           priority
@@ -16,11 +16,11 @@ export default function Page() {
         <div className="absolute inset-0 bg-primary/80 dark:bg-primary/60" />
         <div className="absolute bottom-0 left-0 p-8 text-black">
           <h1 className="text-4xl font-bold mb-4">Alumni Connection Platform</h1>
-          <p className="text-xl">Connect with your college alumni network</p>
+          <p className="text-xl">Join our growing alumni community</p>
         </div>
       </div>
 
-      {/* Right side - Sign In */}
+      {/* Right side - Sign Up */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center mb-8">
@@ -32,13 +32,13 @@ export default function Page() {
               className="mx-auto mb-4"
             />
             <h2 className="text-2xl font-bold text-foreground">
-              Welcome to Alumni Connect
+              Create your account
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Sign in or create an account to continue
+              Join our alumni network today
             </p>
           </div>
-          <SignIn
+          <SignUp
             appearance={{
               elements: {
                 rootBox: "mx-auto w-full",
@@ -50,23 +50,18 @@ export default function Page() {
                 dividerLine: "bg-border",
                 dividerText: "text-muted-foreground",
                 formFieldLabel: "text-foreground",
-                formFieldInput: "bg-background border-border text-foreground focus:ring-2 focus:ring-primary/20",
+                formFieldInput: "bg-background border-border text-foreground focus:ring-primary",
                 formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
                 footerActionText: "text-muted-foreground",
                 footerActionLink: "text-primary hover:text-primary/80",
               },
-              variables: {
-                colorPrimary: 'hsl(var(--primary))',
-                colorText: 'hsl(var(--foreground))',
-                colorTextSecondary: 'hsl(var(--muted-foreground))',
-                colorBackground: 'hsl(var(--background))',
-                colorInputBackground: 'hsl(var(--background))',
-                colorInputText: 'hsl(var(--foreground))',
-              },
             }}
+            afterSignUpUrl="/onboarding"
+            signInUrl="/sign-in"
+            redirectUrl="/"
           />
         </div>
       </div>
     </div>
   );
-} 
+}
