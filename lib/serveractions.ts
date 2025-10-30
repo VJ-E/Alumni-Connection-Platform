@@ -1,7 +1,7 @@
 "use server"
 
 import { Post } from "@/models/post.model";
-import { IUser, User } from "@/models/user.model";
+import { IUser, User, Department } from "@/models/user.model";
 import { Message } from "@/models/message.model";
 import { Connection } from "@/models/connection.model";
 import { currentUser } from "@clerk/nextjs/server"
@@ -28,6 +28,7 @@ const createUserObject = async (user: any) => {
         lastName: user.lastName || " ",
         email: user.emailAddresses[0]?.emailAddress || "",
         profilePhoto: user.imageUrl || "/default-avatar.png",
+        department: user.department || "",
         description: userProfile?.description || "",
         graduationYear: userProfile?.graduationYear || new Date().getFullYear(),
         linkedInUrl: userProfile?.linkedInUrl || "",
@@ -42,6 +43,7 @@ interface SafeUser {
     lastName: string;
     email: string;
     profilePhoto: string;
+    department: string;
     description: string;
     graduationYear: number | null;
     role: string;
@@ -85,6 +87,7 @@ const serializeDocument = (doc: any): SafePost | null => {
             lastName: plainDoc.user.lastName || "",
             email: plainDoc.user.email || "",
             profilePhoto: plainDoc.user.profilePhoto || "/default-avatar.png",
+            department: plainDoc.user.department || "",
             description: plainDoc.user.description || "",
             graduationYear: plainDoc.user.graduationYear || null,
             linkedInUrl: plainDoc.user.linkedInUrl || "",
@@ -103,6 +106,7 @@ const serializeDocument = (doc: any): SafePost | null => {
                 lastName: comment.user.lastName || "",
                 email: comment.user.email || "",
                 profilePhoto: comment.user.profilePhoto || "/default-avatar.png",
+                department: comment.user.department || "",
                 description: comment.user.description || "",
                 graduationYear: comment.user.graduationYear || null,
                 linkedInUrl: comment.user.linkedInUrl || "",
@@ -155,9 +159,10 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
                     post.user = {
                         userId: post.user.userId,
                         firstName: post.user.firstName,
-                        lastName: post.user.lastName,
+                        lastName: post.user.lastName,   
                         email: post.user.email,
                         profilePhoto: post.user.profilePhoto,
+                        department: post.user.department,
                         description: post.user.description || "",
                         graduationYear: userProfile.graduationYear,
                         linkedInUrl: userProfile.linkedInUrl || "",
@@ -205,6 +210,7 @@ const createSafeUserObject = async (user: any): Promise<SafeUser | null> => {
         lastName: userProfile.lastName || "",
         email: userProfile.email || "",
         profilePhoto: userProfile.profilePhoto || "/default-avatar.png",
+        department: userProfile.department || "",
         description: userProfile.description || "",
         graduationYear: userProfile.graduationYear || null,
         linkedInUrl: userProfile.linkedInUrl || "",
@@ -325,6 +331,7 @@ export const getAllUsers = async () => {
             lastName: user.lastName || "",
             email: user.email || "",
             profilePhoto: user.profilePhoto || "/default-avatar.png",
+            department: user.department || "",
             description: user.description || "",
             graduationYear: user.graduationYear || null,
             linkedInUrl: user.linkedInUrl || "",
@@ -368,6 +375,7 @@ export const getConnectedUsers = async () => {
             lastName: user.lastName || "",
             email: user.email || "",
             profilePhoto: user.profilePhoto || "/default-avatar.png",
+            department: user.department || "",
             description: user.description || "",
             graduationYear: user.graduationYear || null,
             linkedInUrl: user.linkedInUrl || "",
@@ -388,15 +396,23 @@ export const getUserById = async (userId: string) => {
         const user = await User.findOne({ userId }).lean();
         if (!user) return null;
         
+        // Ensure department is of type Department or undefined
+        const department: Department | undefined = 
+          user.department && ['CSE(AI&ML)', 'CSE', 'CSBS', 'AI&DS'].includes(user.department) 
+            ? user.department as Department 
+            : undefined;
+            
         return {
             userId: user.userId,
             firstName: user.firstName || "",
             lastName: user.lastName || "",
             email: user.email || "",
             profilePhoto: user.profilePhoto || "/default-avatar.png",
+            department: department,
             description: user.description || "",
             graduationYear: user.graduationYear || null,
             linkedInUrl: user.linkedInUrl || "",
+            githubUrl: user.githubUrl || "",
             role: user.role || "student"
         };
     } catch (error) {
@@ -533,6 +549,7 @@ export const getConnectionRequests = async () => {
                         lastName: sender.lastName || "",
                         email: sender.email || "",
                         profilePhoto: sender.profilePhoto || "/default-avatar.png",
+                        department: sender.department || "",
                         description: sender.description || "",
                         linkedInUrl: sender.linkedInUrl || "",
                         graduationYear: sender.graduationYear || null
@@ -655,6 +672,7 @@ export const getUserProfile = async () => {
             email: profile.email || '',
             profilePhoto: profile.profilePhoto || '/default-avatar.png',
             description: profile.description || '',
+            department: profile.department || '',
             graduationYear: profile.graduationYear || null,
             linkedInUrl: profile.linkedInUrl || "",
             githubUrl: profile.githubUrl || "",
@@ -678,6 +696,7 @@ export const updateProfile = async (data: {
     linkedInUrl: string;
     githubUrl: string;
     profilePhoto: string;
+    department?: string;
 }) => {
     try {
         await connectDB();
@@ -711,6 +730,7 @@ export const updateProfile = async (data: {
                     lastName: data.lastName,
                     description: data.description,
                     graduationYear: data.graduationYear,
+                    department: data.department || '',
                     linkedInUrl: data.linkedInUrl,
                     githubUrl: data.githubUrl,
                     profilePhoto: imageUrl,
@@ -724,6 +744,7 @@ export const updateProfile = async (data: {
                 lastName: data.lastName,
                 description: data.description,
                 graduationYear: data.graduationYear,
+                department: data.department || '',
                 linkedInUrl: data.linkedInUrl || "",
                 githubUrl: data.githubUrl || "",
                 profilePhoto: imageUrl,
