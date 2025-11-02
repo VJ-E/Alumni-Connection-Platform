@@ -30,15 +30,18 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      userId: user._id.toString(),
-      clerkId: user.clerkId,
+      userId: user.userId,
+      _id: user._id.toString(),
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       profilePhoto: user.profilePhoto,
       description: user.description,
       graduationYear: user.graduationYear,
-      role: role
+      department: user.department,
+      role: role,
+      linkedInUrl: user.linkedInUrl,
+      githubUrl: user.githubUrl
     });
   } catch (error) {
     console.error('Error in GET /api/users:', error);
@@ -103,13 +106,12 @@ export async function POST(req: NextRequest) {
     } else {
       // Create new user
       const newUser = new User({
-        clerkId,
+        userId: clerkId, // Using clerkId as userId
         email,
         firstName,
         lastName,
         graduationYear: parseInt(graduationYear as string),
         department: department as Department,
-        major: major as string,
         profilePhoto,
         description: '',
         role: (parseInt(graduationYear as string) <= new Date().getFullYear() ? 'alumni' : 'student') as 'alumni' | 'student'
@@ -121,11 +123,14 @@ export async function POST(req: NextRequest) {
       success: true,
       user: {
         id: user._id,
-        clerkId: user.clerkId,
+        userId: user.userId,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role
+        role: user.role,
+        profilePhoto: user.profilePhoto,
+        graduationYear: user.graduationYear,
+        department: user.department
       }
     });
 
