@@ -10,6 +10,7 @@ export default function Page() {
           src="/login-banner.jpg"
           alt="Login Banner"
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
           priority
         />
