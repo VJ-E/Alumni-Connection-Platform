@@ -16,7 +16,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     if (!isLoaded || !userId) return;
 
     // Initialize socket connection
-    const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
+    const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL!,{
       transports: ['websocket'],
       autoConnect: true,
     });
