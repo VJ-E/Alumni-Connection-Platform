@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
-import db from "@/lib/db";
 import Opportunity from "@/models/opportunity.model";
 import { NextRequest } from "next/server";
 import { User } from "@/models/user.model";
+import connectDB from "@/lib/db";
 
 export async function GET() {
   try {
-    await db();
+    await connectDB();
     const opportunities = await Opportunity.find().sort({ date: 1 });
     return NextResponse.json(opportunities);
   } catch (error) {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await db();
+    await connectDB();
     
     // Check if user is an alumni
     const user = await User.findOne({ userId });
