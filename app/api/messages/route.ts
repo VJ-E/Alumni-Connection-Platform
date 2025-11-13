@@ -2,28 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuth } from '@clerk/nextjs/server';
 import { NextRequest } from 'next/server';
 import mongoose from 'mongoose';
+import connectDB from '@/lib/db';
 
-// Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || '';
-
-// MongoDB connection
-let isConnected = false;
-
-async function connectDB() {
-  if (isConnected) {
-    console.log('Using existing MongoDB connection');
-    return;
-  }
-
-  try {
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
-  }
-}
 
 // Import Message model after connection is established
 const Message = mongoose.models.Message || mongoose.model('Message', new mongoose.Schema({
