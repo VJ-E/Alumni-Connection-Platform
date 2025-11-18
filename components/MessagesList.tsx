@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getConnectedUsers, getConnectionRequests, respondToConnectionRequest } from "@/lib/serveractions";
+import { getConnectedUsers, getConnectionRequests, respondToConnectionRequest, getLastMessageTimesForCurrentUser } from "@/lib/serveractions";
 import { IUser } from "@/models/user.model";
 import ProfilePhoto from "./shared/ProfilePhoto";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { Button } from "./ui/button";
 import { SearchIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { toast } from "react-toastify";
+import { useSocket } from "@/contexts/SocketContext";
 
 interface ConnectionRequest {
   _id: string;
@@ -34,6 +35,12 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [processingRequests, setProcessingRequests] = useState<Record<string, boolean>>({});
+  const { socket } = useSocket();
+
+  const [lastMap, setLastMap] = useState<
+  Record<string, { time: number; content?: string | null; imageUrl?: string | null; isUnread?: boolean }>
+>({});
+
 
   useEffect(() => {
     async function fetchData() {
@@ -42,8 +49,32 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
           getConnectedUsers(),
           getConnectionRequests()
         ]);
-        setUsers(connectedUsers);
-        // Convert the mongoose documents to our ConnectionRequest type
+
+        // Get last-message timestamps & content
+        const lastTimes = await getLastMessageTimesForCurrentUser();
+
+        // Build new map
+        const newLastMap: Record<string, { time: number; content?: string | null; imageUrl?: string | null; isUnread?: boolean }> = {};
+        lastTimes.forEach((item: any) => {
+          newLastMap[item.userId] = {
+            time: item.lastMessageDate ? new Date(item.lastMessageDate).getTime() : 0,
+            content: item.lastMessageContent ?? null,
+            imageUrl: item.lastMessageImage ?? null,
+            isUnread: !!item.isUnread
+          };
+        });
+        setLastMap(newLastMap);
+        
+
+        // Sort connectedUsers by last message time
+        const sorted = [...connectedUsers].sort((a: any, b: any) => {
+          const ta = newLastMap[a.userId]?.time || 0;
+          const tb = newLastMap[b.userId]?.time || 0;
+          return tb - ta;
+        });
+        setUsers(sorted);
+
+        // Format connection requests
         const validRequests: ConnectionRequest[] = requests
           .filter((req): req is NonNullable<typeof req> => req !== null)
           .map(req => ({
@@ -56,6 +87,7 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
             updatedAt: req.updatedAt
           }));
         setConnectionRequests(validRequests);
+
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load messages");
@@ -65,23 +97,63 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
     }
 
     fetchData();
-    // Poll for new requests every 10 seconds
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Reorder instantly when a new message arrives via socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handler = (msg: any) => {
+      const partnerId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
+
+      setUsers(prev => {
+        const i = prev.findIndex(u => u.userId === partnerId);
+        if (i === -1) return prev;
+        const cloned = [...prev];
+        const [item] = cloned.splice(i, 1);
+        cloned.unshift(item);
+        return cloned;
+      });
+
+      // Also update lastMap preview instantly
+      setLastMap(prev => ({
+        ...prev,
+        [partnerId]: {
+          time: Date.now(),
+          content: msg.content ?? null,
+          imageUrl: msg.imageUrl ?? null,
+          isUnread: msg.senderId !== currentUser.id
+        }
+      }));
+    };
+
+    socket.on("newMessage", handler);
+    return () => {
+      socket.off("newMessage", handler);
+    };
+  }, [socket, currentUser]);
 
   const handleConnectionResponse = async (connectionId: string, status: 'accepted' | 'rejected') => {
     try {
       setProcessingRequests(prev => ({ ...prev, [connectionId]: true }));
       await respondToConnectionRequest(connectionId, status);
-      
-      // Remove the request from the list
       setConnectionRequests(prev => prev.filter(req => req._id !== connectionId));
-      
+
       if (status === 'accepted') {
-        // Refresh connected users list
         const connectedUsers = await getConnectedUsers();
-        setUsers(connectedUsers);
+        const lastTimes = await getLastMessageTimesForCurrentUser();
+        const newLastMap: Record<string, number> = {};
+        lastTimes.forEach((item: any) => {
+          newLastMap[item.userId] = new Date(item.lastMessageDate).getTime();
+        });
+        const sorted = [...connectedUsers].sort((a: any, b: any) => {
+          const ta = newLastMap[a.userId] || 0;
+          const tb = newLastMap[b.userId] || 0;
+          return tb - ta;
+        });
+        setUsers(sorted);
         toast.success("Connection accepted!");
       } else {
         toast.info("Connection request declined");
@@ -182,11 +254,34 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
                 <ProfilePhoto
                   src={user.profilePhoto || "/default-avatar.png"}
                 />
-                <div>
-                  <h3 className="font-medium">
-                    {user.firstName} {user.lastName}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Click to view chat</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium truncate">
+                      {user.firstName} {user.lastName}
+                    </h3>
+
+                    <div className="flex items-center space-x-2">
+                      {lastMap[user.userId]?.time ? (
+                        <div className="text-xs text-muted-foreground ml-2">
+                          {new Date(lastMap[user.userId].time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      ) : null}
+
+                      {lastMap[user.userId]?.isUnread && (
+                        <span className="inline-flex items-center justify-center bg-green-500 text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                          New
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground truncate mt-1">
+                    {lastMap[user.userId]?.content
+                      ? lastMap[user.userId]!.content
+                      : lastMap[user.userId]?.imageUrl
+                        ? "📷 Photo"
+                        : "Click to view chat"}
+                  </p>
                 </div>
               </Link>
             ))
@@ -195,4 +290,4 @@ export default function MessagesList({ currentUser }: { currentUser: any }) {
       </div>
     </div>
   );
-} 
+}
