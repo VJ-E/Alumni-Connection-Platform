@@ -391,8 +391,8 @@ export default function ChatWindow({
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                   message.senderId === currentUser.userId
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground'
+                    ? 'bg-green-500 text-primary-foreground'
+                    : 'bg-blue-500 text-primary-foreground'
                 }`}
               >
                 {message.imageUrl && message.imageUrl !== 'uploading...' && (
@@ -423,7 +423,7 @@ export default function ChatWindow({
                   })}
                 </p>
                 {message.senderId === currentUser.userId && index === messages.length - 1 && (
-                <p className="text-[10px] text-gray-400 mt-1 text-right">
+                <p className="text-[10px] text-white mt-1 text-right">
                   {otherUserLastReadAt &&
                   new Date(message.createdAt) <= otherUserLastReadAt
                     ? "Seen"
