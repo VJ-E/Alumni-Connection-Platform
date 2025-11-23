@@ -6,7 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "next-themes";
-import { SocketProvider } from "@/providers/SocketProvider";
+import { SocketProvider } from "@/contexts/SocketContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
