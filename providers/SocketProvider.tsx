@@ -5,7 +5,13 @@ import { useAuth } from "@clerk/nextjs";
 import SocketIOClient from 'socket.io-client';
 const io = SocketIOClient;
 type SocketType = ReturnType<typeof SocketIOClient>;
+import { useContext } from "react";
 import { SocketContext } from "@/contexts/SocketContext";
+
+export const useSocket = () => {
+  return useContext(SocketContext).socket;
+};
+
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<SocketType | null>(null);
