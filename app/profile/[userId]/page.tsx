@@ -16,6 +16,7 @@ type UserProfile = {
   description: string;
   graduationYear: number | null;
   department: Department | ''; // Can be a Department value or empty string
+  major: string; // Added missing major field
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
@@ -51,6 +52,7 @@ export default async function UserProfilePage({ params }: { params: { userId: st
       description: profile.description || "",
       graduationYear: profile.graduationYear || null,
       department: profile.department || '', // Default to empty string if not provided
+      major: profile.major || '', // Added major field
       role: (profile.role as 'student' | 'alumni' | 'admin') || 'student', // Ensure role is one of the allowed values
       ...(profile.linkedInUrl && { linkedInUrl: profile.linkedInUrl }),
       ...(profile.githubUrl && { githubUrl: profile.githubUrl })
