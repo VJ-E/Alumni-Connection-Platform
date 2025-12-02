@@ -316,25 +316,15 @@ export const createCommentAction = async (postId: string, commentText: string) =
 // get all users using server actions
 export const getAllUsers = async () => {
     try {
-        console.log('Connecting to database...');
         await connectDB();
-        
-        // Get all users except the current user
-        console.log('Getting current user...');
-        const clerkUser = await currentUser();
-        console.log('Current user:', clerkUser?.id);
-        
-        const query = clerkUser ? { userId: { $ne: clerkUser.id } } : {};
-        console.log('Querying users with filter:', JSON.stringify(query));
-        
-        const users = await User.find(query).lean().exec();
-        console.log(`Found ${users.length} users in database`);
-        
-        if (users.length === 0) {
-            console.log('No users found. Checking if User model is properly connected...');
-            const count = await User.countDocuments({});
-            console.log(`Total users in database: ${count}`);
-        }
+        const user = await currentUser();
+        if (!user) return [];
+
+        // First ensure current user's profile exists
+        await getUserProfile();
+
+        // Get all users
+        const users = await User.find({}).exec();
         
         // Transform users to safe format
         const transformedUsers = users.map(user => ({
@@ -347,14 +337,12 @@ export const getAllUsers = async () => {
             description: user.description || "",
             graduationYear: user.graduationYear || null,
             linkedInUrl: user.linkedInUrl || "",
-            role: user.role || 'user',
-            major: user.major || ""
+            role: user.role
         }));
 
-        console.log('Transformed users:', transformedUsers.length);
         return transformedUsers;
     } catch (error) {
-        console.error('Error in getAllUsers:', error);
+        console.error('Error fetching users:', error);
         return [];
     }
 }
@@ -509,7 +497,7 @@ export const getLastMessageTimesForCurrentUser = async () => {
     try {
       await connectDB();
       const user = await currentUser();
-    if (!user) return [];
+      if (!user) return [];
   
       // Aggregation: latest message per conversation partner + read status lookup
       const results = await Message.aggregate([
@@ -637,9 +625,6 @@ export const getConnectionRequests = async () => {
         await connectDB();
         const user = await currentUser();
         if (!user) return [];
-
-        // First ensure current user's profile exists
-        await getUserProfile();
 
         const requests = await Connection.find({
             receiverId: user.id,
