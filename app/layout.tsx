@@ -10,15 +10,8 @@ import { ThemeProvider } from "next-themes";
 import { SocketProvider } from "@/contexts/SocketContext";
 import PWAInstaller from "@/components/PWAInstaller";
 import OfflineIndicator from "@/components/OfflineIndicator";
-import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
-
-// Memoize components to prevent unnecessary re-renders
-const MemoizedNavbarWrapper = React.memo(NavbarWrapper);
-const MemoizedOnboardingGuard = React.memo(OnboardingGuard);
-const MemoizedPWAInstaller = React.memo(PWAInstaller);
-const MemoizedOfflineIndicator = React.memo(OfflineIndicator);
 
 export const metadata: Metadata = {
   title: "Alumni Connect",
@@ -137,9 +130,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SocketProvider>
-              <MemoizedNavbarWrapper />
-              <MemoizedOnboardingGuard>
-                <div className="flex-1 w-full pt-10 pb-20 md:pb-0 bg-background">
+              <NavbarWrapper />
+              <OnboardingGuard>
+                <div className="flex-1 w-full pt-10 bg-background">
                   <main className="max-w-6xl mx-auto px-4">
                     {children}
                     <Toaster 
@@ -157,14 +150,14 @@ export default function RootLayout({
                     />
                   </main>
                 </div>
-              </MemoizedOnboardingGuard>
+              </OnboardingGuard>
               <Analytics />
             </SocketProvider>
           </ThemeProvider>
           
           {/* PWA Components */}
-          <MemoizedPWAInstaller />
-          <MemoizedOfflineIndicator />
+          <PWAInstaller />
+          <OfflineIndicator />
         </body>
       </html>
     </ClerkProvider>
