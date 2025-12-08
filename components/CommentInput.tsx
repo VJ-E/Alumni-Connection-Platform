@@ -6,22 +6,31 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { createCommentAction } from "@/lib/serveractions";
 import { toast } from "react-toastify";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 const CommentInput = ({ postId }: { postId: string }) => {
   const { user } = useUser();
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isOnline = useOnlineStatus();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim() || !user) return;
 
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await createCommentAction(postId, comment);
       setComment('');
+      toast.success('Comment posted successfully!');
     } catch (error) {
       console.error('Failed to create comment:', error);
+      toast.error('Failed to post comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

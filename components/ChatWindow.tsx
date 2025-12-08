@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { Images } from "lucide-react";
 import Image from "next/image";
 import { useSocket } from "@/contexts/SocketContext";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 // Helper function to convert URLs to clickable links
 const convertUrlsToLinks = (text: string) => {
@@ -60,6 +61,7 @@ export default function ChatWindow({
   const { socket, isConnected } = useSocket();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const [otherUserLastReadAt, setOtherUserLastReadAt] = useState<Date | null>(null);
+  const isOnline = useOnlineStatus();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -263,6 +265,12 @@ export default function ChatWindow({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!newMessage.trim() && !imageUploading) || connectionStatus !== 'accepted' || !socket) return;
+
+    // Check if user is online
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
 
     try {
       // Create a temporary message ID for optimistic update
