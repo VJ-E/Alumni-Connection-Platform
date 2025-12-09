@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { toast } from "react-toastify";
 import { Loader2, Image as ImageIcon, X } from "lucide-react";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 interface Connection {
     userId: string;            // Clerk user ID
@@ -53,6 +54,7 @@ export default function CreateGroupModal({ onGroupCreated }: { onGroupCreated: (
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     if (open) {
@@ -108,6 +110,11 @@ export default function CreateGroupModal({ onGroupCreated }: { onGroupCreated: (
 
     if (selectedMembers.length === 0) {
       toast.error('Please select at least one member');
+      return;
+    }
+
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
       return;
     }
 
