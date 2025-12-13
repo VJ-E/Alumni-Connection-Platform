@@ -11,6 +11,8 @@ import ReactTimeago from "react-timeago";
 import { deletePostAction } from "@/lib/serveractions";
 import { useAuth } from "@clerk/nextjs";
 import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
+import { toast } from "sonner";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 interface SafePost {
     _id: string;
@@ -55,6 +57,7 @@ const Post = ({ post }: { post: SafePost }) => {
   const role = post?.user?.role;
   const isAlumni = post?.user?.graduationYear ? post.user.graduationYear < currentYear : false;
   const currentUser = useCurrentUserProfile(user?.id);
+  const isOnline = useOnlineStatus();
 
   if (!post?.user) {
     return null;
@@ -89,6 +92,10 @@ const Post = ({ post }: { post: SafePost }) => {
           {(loggedInUser || currentUser?.profile?.role === 'admin') && (
             <Button
               onClick={() => {
+                if (!isOnline) {
+                  toast.error("You are offline. Please check your connection and try again.");
+                  return;
+                }
                 deletePostAction(post._id);
               }}
               size={"icon"}
