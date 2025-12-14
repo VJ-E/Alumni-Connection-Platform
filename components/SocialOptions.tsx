@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { likePostAction, dislikePostAction } from "@/lib/serveractions";
 import Comments from "./Comments";
 import { toast } from "react-toastify";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 interface SafePost {
   _id: string;
@@ -47,6 +48,7 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
   const [isLiked, setIsLiked] = useState(post.likes?.includes(user?.id || '') || false);
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [isLoading, setIsLoading] = useState(false);
+  const isOnline = useOnlineStatus();
 
   const handleLike = async () => {
     if (!user) {
@@ -54,6 +56,11 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
       return;
     }
     if (isLoading) return;
+
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
 
     try {
       setIsLoading(true);

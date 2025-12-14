@@ -6,16 +6,24 @@ import { PostDialog } from "./PostDialog";
 import { toast } from "react-toastify";
 import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
 import { useUser } from "@clerk/nextjs";
+import { useOnlineStatus } from "./OfflineIndicator";
 
 const PostInput = () => {
   const { user } = useUser();
   const { profile } = useCurrentUserProfile(user?.id);
   const [open, setOpen] = useState<boolean>(false);
+  const isOnline = useOnlineStatus();
   const inputHandler = () => {
     if (!user) {
       toast.error("Please Login first")
       return
     }
+    
+    if (!isOnline) {
+      toast.error("You are offline. Please check your connection and try again.");
+      return;
+    }
+    
     setOpen(true);
   };
   return (
