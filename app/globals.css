@@ -74,3 +74,17 @@
       @apply bg-background text-foreground;
     }
   }
+
+  @layer utilities {
+    /* Mobile bottom navigation safe area support */
+    .safe-area-inset-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Ensure content doesn't get hidden behind mobile navigation */
+    @media (max-width: 768px) {
+      body {
+        padding-bottom: 5rem;
+      }
+    }
+  }
