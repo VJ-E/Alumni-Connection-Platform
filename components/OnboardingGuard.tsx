@@ -2,7 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser();
@@ -10,6 +10,8 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const checkRef = useRef(false);
 
   // Routes that don't require onboarding check
   const excludedRoutes = [
@@ -18,7 +20,10 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
     '/sign-up',
     '/api',
     '/_next',
-    '/favicon.ico'
+    '/favicon.ico',
+    '/manifest.json',
+    '/sw.js',
+    '/offline.html'
   ];
 
   // Check if current path should be excluded
@@ -47,35 +52,52 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
       return;
     }
 
+    // Prevent multiple checks for the same user
+    if (onboardingChecked || checkRef.current) {
+      setIsChecking(false);
+      return;
+    }
+
     // Check if user has completed onboarding
     const checkOnboarding = async () => {
       try {
+        checkRef.current = true;
         console.log('Checking onboarding status for user:', user.emailAddresses[0].emailAddress);
-        const response = await fetch(`/api/users/check-onboarding?email=${encodeURIComponent(user.emailAddresses[0].emailAddress)}`);
+        
+        const response = await fetch(`/api/users/check-onboarding?email=${encodeURIComponent(user.emailAddresses[0].emailAddress)}`, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
         
         if (response.ok) {
           // User has completed onboarding, allow access
           console.log('User has completed onboarding, allowing access');
+          setOnboardingChecked(true);
           setIsChecking(false);
         } else if (response.status === 404) {
           // User hasn't completed onboarding, redirect
           console.log('User has not completed onboarding, redirecting to /onboarding');
           setHasRedirected(true);
+          setOnboardingChecked(true);
           router.push('/onboarding');
         } else {
           // Some other error, allow access for now
           console.warn('Error checking onboarding status, allowing access');
+          setOnboardingChecked(true);
           setIsChecking(false);
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);
         // On error, allow access to prevent blocking users
+        setOnboardingChecked(true);
         setIsChecking(false);
       }
     };
 
     checkOnboarding();
-  }, [user, isLoaded, pathname, shouldExcludeRoute, router, hasRedirected]);
+  }, [user, isLoaded, pathname, shouldExcludeRoute, router, hasRedirected, onboardingChecked]);
 
   // Show loading state while checking
   if (isChecking) {
