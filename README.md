@@ -8,29 +8,10 @@ A modern web application to connect alumni and students, enabling networking, re
 [![Clerk](https://img.shields.io/badge/Clerk-000000?style=flat-square&logo=clerk&logoColor=white)](https://clerk.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-## Screenshots
+## Preview
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
-  <div>
-    <img src="public/home-preview.png" alt="Home Page" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="text-align: center; margin-top: 8px;">Home Page</p>
-  </div>
-  <div>
-    <img src="public/profile-preview.png" alt="Profile Page" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="text-align: center; margin-top: 8px;">Profile Page</p>
-  </div>
-  <div>
-    <img src="public/chat-preview.png" alt="Chat Interface" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="text-align: center; margin-top: 8px;">Chat Interface</p>
-  </div>
-  <div>
-    <img src="public/people-preview.png" alt="People Directory" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="text-align: center; margin-top: 8px;">People Directory</p>
-  </div>
-  <div>
-    <img src="public/events-preview.png" alt="Events Page" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <p style="text-align: center; margin-top: 8px;">Events Page</p>
-  </div>
+<div style="display: flex; justify-content: center; margin: 20px 0;">
+  <img src="public/preview.gif" alt="Alumni Connection Platform Demo" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
 </div>
 
 ---
