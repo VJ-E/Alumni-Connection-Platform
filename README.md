@@ -8,22 +8,47 @@ A modern web application to connect alumni and students, enabling networking, re
 [![Clerk](https://img.shields.io/badge/Clerk-000000?style=flat-square&logo=clerk&logoColor=white)](https://clerk.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
+## Screenshots
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
+  <div>
+    <img src="public/home-preview.png" alt="Home Page" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <p style="text-align: center; margin-top: 8px;">Home Page</p>
+  </div>
+  <div>
+    <img src="public/profile-preview.png" alt="Profile Page" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <p style="text-align: center; margin-top: 8px;">Profile Page</p>
+  </div>
+  <div>
+    <img src="public/chat-preview.png" alt="Chat Interface" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <p style="text-align: center; margin-top: 8px;">Chat Interface</p>
+  </div>
+  <div>
+    <img src="public/people-preview.png" alt="People Directory" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <p style="text-align: center; margin-top: 8px;">People Directory</p>
+  </div>
+  <div>
+    <img src="public/events-preview.png" alt="Events Page" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <p style="text-align: center; margin-top: 8px;">Events Page</p>
+  </div>
+</div>
+
 ---
 
-## 🚀 Features
+## Features
 
-- **🔐 User Authentication:** Secure sign-up/sign-in with Clerk
-- **👥 User Profiles:** Comprehensive profiles for alumni and students with rich editing capabilities
-- **💬 Real-time Messaging:** Instant messaging between connected users with read receipts
-- **📱 Responsive Design:** Fully responsive UI that works on all devices
-- **🔗 Connection Management:** Send, accept, and manage professional connections
-- **📝 Posts & Interactions:** Share updates, comment, and engage with the community
-- **📅 Events & Opportunities:** Discover and participate in alumni events and career opportunities
-- **🖼️ Media Sharing:** Upload and share images in messages and posts using Cloudinary
+- **User Authentication:** Secure sign-up/sign-in with Clerk
+- **User Profiles:** Comprehensive profiles for alumni and students with rich editing capabilities
+- **Real-time Messaging:** Instant messaging between connected users with read receipts
+- **Responsive Design:** Fully responsive UI that works on all devices
+- **Connection Management:** Send, accept, and manage professional connections
+- **Posts & Interactions:** Share updates, comment, and engage with the community
+- **Events & Opportunities:** Discover and participate in alumni events and career opportunities
+- **Media Sharing:** Upload and share images in messages and posts using Cloudinary
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:**
   - Next.js 14 (App Router)
@@ -57,7 +82,7 @@ A modern web application to connect alumni and students, enabling networking, re
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 app/
@@ -84,7 +109,7 @@ realtime-backend/    # Socket.IO server implementation
 
 ---
 
-## ⚡ Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -153,7 +178,7 @@ The application will be available at `http://localhost:3000`
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
 ### Vercel Deployment
 
@@ -175,7 +200,7 @@ For production, you'll need to deploy the Socket.IO server separately (e.g., on 
 
 ---
 
-## 🛡️ Security
+## Security
 
 - All API routes are protected with Clerk authentication
 - Sensitive routes use server-side authentication checks
@@ -185,7 +210,7 @@ For production, you'll need to deploy the Socket.IO server separately (e.g., on 
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -195,13 +220,13 @@ For production, you'll need to deploy the Socket.IO server separately (e.g., on 
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Next.js](https://nextjs.org/) for the amazing React framework
 - [Clerk](https://clerk.com/) for authentication
