@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "./ui/button";
 import { Heart, MessageCircle } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
 import { likePostAction, dislikePostAction } from "@/lib/serveractions";
 import Comments from "./Comments";
 import { toast } from "react-toastify";
@@ -43,16 +43,18 @@ interface SafePost {
 }
 
 const SocialOptions = ({ post }: { post: SafePost }) => {
-  const { user } = useUser();
+  const { data: session } = useSession();
   const [showComments, setShowComments] = useState(false);
-  const [isLiked, setIsLiked] = useState(post.likes?.includes(user?.id || '') || false);
+  const [isLiked, setIsLiked] = useState(
+    post.likes?.includes(session?.user?.id || "") || false
+  );
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [isLoading, setIsLoading] = useState(false);
   const isOnline = useOnlineStatus();
 
   const handleLike = async () => {
-    if (!user) {
-      toast.error('Please sign in to like posts');
+    if (!session?.user) {
+      toast.error("Please sign in to like posts");
       return;
     }
     if (isLoading) return;
@@ -66,15 +68,15 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
       setIsLoading(true);
       if (isLiked) {
         await dislikePostAction(post._id);
-        setLikeCount(prev => Math.max(0, prev - 1));
+        setLikeCount((prev) => Math.max(0, prev - 1));
       } else {
         await likePostAction(post._id);
-        setLikeCount(prev => prev + 1);
+        setLikeCount((prev) => prev + 1);
       }
       setIsLiked(!isLiked);
     } catch (error) {
-      console.error('Error handling like:', error);
-      toast.error('Failed to update like status');
+      console.error("Error handling like:", error);
+      toast.error("Failed to update like status");
     } finally {
       setIsLoading(false);
     }
@@ -88,9 +90,11 @@ const SocialOptions = ({ post }: { post: SafePost }) => {
           variant="ghost"
           size="sm"
           disabled={isLoading}
-          className={`flex items-center gap-2 ${isLiked ? 'text-destructive' : 'text-muted-foreground'}`}
+          className={`flex items-center gap-2 ${
+            isLiked ? "text-destructive" : "text-muted-foreground"
+          }`}
         >
-          <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+          <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
           <span>{likeCount}</span>
         </Button>
         <Button

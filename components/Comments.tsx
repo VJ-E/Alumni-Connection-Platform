@@ -1,54 +1,56 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
-import CommentInput from './CommentInput';
-import Image from 'next/image';
+import React, { useState } from "react";
+import { useSession } from "next-auth/react";
+import CommentInput from "./CommentInput";
+import Image from "next/image";
 
 interface SafePost {
-    _id: string;
+  _id: string;
+  description: string;
+  user: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePhoto: string;
     description: string;
+    graduationYear: number | null;
+  };
+  imageUrl?: string;
+  likes?: string[];
+  comments?: Array<{
+    _id: string;
+    textMessage: string;
     user: {
-        userId: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-        profilePhoto: string;
-        description: string;
-        graduationYear: number | null;
+      userId: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      profilePhoto: string;
+      description: string;
+      graduationYear: number | null;
     };
-    imageUrl?: string;
-    likes?: string[];
-    comments?: Array<{
-        _id: string;
-        textMessage: string;
-        user: {
-            userId: string;
-            firstName: string;
-            lastName: string;
-            email: string;
-            profilePhoto: string;
-            description: string;
-            graduationYear: number | null;
-        };
-        createdAt: string;
-        updatedAt: string;
-    }>;
     createdAt: string;
     updatedAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const Comments = ({ post }: { post: SafePost }) => {
-  const { user } = useUser();
+  const { data: session } = useSession();
   const [showAllComments, setShowAllComments] = useState(false);
-  const commentsToShow = showAllComments ? post.comments : post.comments?.slice(0, 3);
+  const commentsToShow = showAllComments
+    ? post.comments
+    : post.comments?.slice(0, 3);
 
-  if (!user) return null;
+  if (!session?.user) return null;
 
   return (
     <div className="border-t border-border p-4 space-y-4">
       <CommentInput postId={post._id} />
-      
+
       <div className="space-y-4">
         {commentsToShow?.map((comment) => (
           <div key={comment._id} className="flex items-start gap-2">
@@ -74,13 +76,15 @@ const Comments = ({ post }: { post: SafePost }) => {
           </div>
         ))}
       </div>
-      
+
       {post.comments && post.comments.length > 3 && (
         <button
           onClick={() => setShowAllComments(!showAllComments)}
           className="text-sm text-primary hover:text-primary/80"
         >
-          {showAllComments ? 'Show less' : `View all ${post.comments.length} comments`}
+          {showAllComments
+            ? "Show less"
+            : `View all ${post.comments.length} comments`}
         </button>
       )}
     </div>

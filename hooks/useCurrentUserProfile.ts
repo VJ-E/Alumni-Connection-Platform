@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 
 type UserProfile = {
-    role: string;
-    profilePhoto: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    description: string;
-    graduationYear: number;
-  };
+  role: string;
+  profilePhoto: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  description: string;
+  graduationYear: number;
+  linkedInUrl?: string;
+  githubUrl?: string;
+  department?: string;
+};
 
 export function useCurrentUserProfile(userId: string | undefined) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -20,6 +23,7 @@ export function useCurrentUserProfile(userId: string | undefined) {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     fetch(`/api/users/${userId}`)
       .then((res) => res.json())

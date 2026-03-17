@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
+import { useSession } from "next-auth/react";
 import ProfilePhoto from "./shared/ProfilePhoto";
-import { useUser } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { Trash2 } from "lucide-react";
 import { Badge } from "./ui/badge";
@@ -9,60 +9,59 @@ import PostContent from "./PostContent";
 import SocialOptions from "./SocialOptions";
 import ReactTimeago from "react-timeago";
 import { deletePostAction } from "@/lib/serveractions";
-import { useAuth } from "@clerk/nextjs";
 import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
 import { toast } from "sonner";
 import { useOnlineStatus } from "./OfflineIndicator";
 
 interface SafePost {
-    _id: string;
+  _id: string;
+  description: string;
+  user: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePhoto: string;
     description: string;
+    graduationYear: number | null;
+    role: string;
+  };
+  imageUrl?: string;
+  likes?: string[];
+  comments?: Array<{
+    _id: string;
+    textMessage: string;
     user: {
-        userId: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-        profilePhoto: string;
-        description: string;
-        graduationYear: number | null;
-        role: string;
+      userId: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      profilePhoto: string;
+      description: string;
+      role: string;
+      graduationYear: number | null;
     };
-    imageUrl?: string;
-    likes?: string[];
-    comments?: Array<{
-        _id: string;
-        textMessage: string;
-        user: {
-            userId: string;
-            firstName: string;
-            lastName: string;
-            email: string;
-            profilePhoto: string;
-            description: string;
-            role: string;
-            graduationYear: number | null;
-        };
-        createdAt: string;
-        updatedAt: string;
-    }>;
     createdAt: string;
     updatedAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const Post = ({ post }: { post: SafePost }) => {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const fullName = post?.user?.firstName + " " + post?.user?.lastName;
-  const loggedInUser = user?.id === post?.user?.userId;
+  const loggedInUser = userId === post?.user?.userId;
   const currentYear = new Date().getFullYear();
-  const role = post?.user?.role;
-  const isAlumni = post?.user?.graduationYear ? post.user.graduationYear < currentYear : false;
-  const currentUser = useCurrentUserProfile(user?.id);
+  const isAlumni = post?.user?.graduationYear
+    ? post.user.graduationYear < currentYear
+    : false;
+  const { profile } = useCurrentUserProfile(userId);
   const isOnline = useOnlineStatus();
 
-  if (!post?.user) {
-    return null;
-  }
-  // console.log("role--------------------------", role,fullName);
+  if (!post?.user) return null;
+
   return (
     <div className="bg-card text-card-foreground my-2 mx-2 md:mx-0 rounded-lg border border-border">
       <div className="flex gap-2 p-4">
@@ -71,17 +70,23 @@ const Post = ({ post }: { post: SafePost }) => {
           <div>
             <h1 className="text-sm font-bold flex items-center">
               {fullName}
-              <Badge variant={"secondary"} className="ml-2">
-                {post.user.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
+              <Badge variant="secondary" className="ml-2">
+                {post.user.role === "admin"
+                  ? "Admin"
+                  : isAlumni
+                  ? "Alumni"
+                  : "Student"}
               </Badge>
               {loggedInUser && (
-                <Badge variant={"outline"} className="ml-2">
+                <Badge variant="outline" className="ml-2">
                   You
                 </Badge>
               )}
             </h1>
             <p className="text-xs text-muted-foreground">
-              {typeof post.user.graduationYear === 'number' ? `Batch of ${post.user.graduationYear}` : 'Graduation year not set'}
+              {typeof post.user.graduationYear === "number"
+                ? `Batch of ${post.user.graduationYear}`
+                : "Graduation year not set"}
             </p>
             <p className="text-xs text-muted-foreground">
               <ReactTimeago date={post.createdAt} />
@@ -89,18 +94,20 @@ const Post = ({ post }: { post: SafePost }) => {
           </div>
         </div>
         <div>
-          {(loggedInUser || currentUser?.profile?.role === 'admin') && (
+          {(loggedInUser || profile?.role === "admin") && (
             <Button
               onClick={() => {
                 if (!isOnline) {
-                  toast.error("You are offline. Please check your connection and try again.");
+                  toast.error(
+                    "You are offline. Please check your connection and try again."
+                  );
                   return;
                 }
                 deletePostAction(post._id);
               }}
-              size={"icon"}
+              size="icon"
               className="rounded-full"
-              variant={"outline"}
+              variant="outline"
             >
               <Trash2 />
             </Button>

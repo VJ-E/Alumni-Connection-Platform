@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import ProfilePhoto from "./shared/ProfilePhoto";
 import { Button } from "./ui/button";
-import { getAllUsers, sendConnectionRequest, getConnectionStatus } from "@/lib/serveractions";
+import {
+  getAllUsers,
+  sendConnectionRequest,
+  getConnectionStatus,
+} from "@/lib/serveractions";
 import { IUser, Department } from "@/models/user.model";
 import Link from "next/link";
 import { SearchIcon } from "lucide-react";
@@ -12,32 +17,39 @@ import { toast } from "react-toastify";
 import { Badge } from "./ui/badge";
 import { useOnlineStatus } from "./OfflineIndicator";
 
-type UserType = 'all' | 'student' | 'alumni' | 'admin';
+type UserType = "all" | "student" | "alumni" | "admin";
 
-export default function PeopleList({ currentUser }: { currentUser: any }) {
+export default function PeopleList({
+  currentUser,
+}: {
+  currentUser: any;
+}) {
   const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({});
-  const [processingConnections, setProcessingConnections] = useState<Record<string, boolean>>({});
-  const [selectedTab, setSelectedTab] = useState<UserType>('all');
+  const [connectionStatuses, setConnectionStatuses] = useState<
+    Record<string, string>
+  >({});
+  const [processingConnections, setProcessingConnections] = useState<
+    Record<string, boolean>
+  >({});
+  const [selectedTab, setSelectedTab] = useState<UserType>("all");
   const isOnline = useOnlineStatus();
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function fetchUsers() {
       try {
         const allUsers = await getAllUsers();
-        // Filter out the current user and ensure proper typing
         const otherUsers = allUsers
-          .filter((user) => user.userId !== currentUser?.id)
-          .map(user => ({
+          .filter((user) => user.userId !== session?.user?.id)
+          .map((user) => ({
             ...user,
-            department: user.department as Department
+            department: user.department as Department,
           }));
-          
+
         setUsers(otherUsers as IUser[]);
 
-        // Fetch connection status for each user
         const statuses: Record<string, string> = {};
         await Promise.all(
           otherUsers.map(async (user) => {
@@ -55,24 +67,23 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
     }
 
     fetchUsers();
-  }, [currentUser?.id]);
+  }, [session?.user?.id]);
 
   const handleConnect = async (userId: string) => {
-    // Check if user is online
     if (!isOnline) {
       toast.error("You are offline. Please check your connection and try again.");
       return;
     }
-    
-    setProcessingConnections(prev => ({ ...prev, [userId]: true }));
+
+    setProcessingConnections((prev) => ({ ...prev, [userId]: true }));
     try {
       await sendConnectionRequest(userId);
-      setConnectionStatuses(prev => ({ ...prev, [userId]: "pending" }));
+      setConnectionStatuses((prev) => ({ ...prev, [userId]: "pending" }));
       toast.success("Connection request sent!");
     } catch (error: any) {
       toast.error(error.message || "Failed to send connection request");
     } finally {
-      setProcessingConnections(prev => ({ ...prev, [userId]: false }));
+      setProcessingConnections((prev) => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -129,16 +140,17 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
 
     if (!nameMatches) return false;
 
-    // Make sure graduationYear exists and is a number
-    const graduationYear = user.graduationYear ? Number(user.graduationYear) : null;
+    const graduationYear = user.graduationYear
+      ? Number(user.graduationYear)
+      : null;
 
     switch (selectedTab) {
-      case 'student':
+      case "student":
         return graduationYear !== null && graduationYear > currentYear;
-      case 'alumni':
+      case "alumni":
         return graduationYear !== null && graduationYear <= currentYear;
-      case 'admin':
-        return user.role === 'admin';
+      case "admin":
+        return user.role === "admin";
       default:
         return true;
     }
@@ -160,57 +172,77 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
-            variant={selectedTab === 'all' ? 'default' : 'outline'}
-            onClick={() => setSelectedTab('all')}
+            variant={selectedTab === "all" ? "default" : "outline"}
+            onClick={() => setSelectedTab("all")}
           >
-            All Users ({users.length})
+            All ({users.length})
           </Button>
           <Button
-            variant={selectedTab === 'student' ? 'default' : 'outline'}
-            onClick={() => setSelectedTab('student')}
+            variant={selectedTab === "student" ? "default" : "outline"}
+            onClick={() => setSelectedTab("student")}
           >
-            Student Users ({users.filter(u => u.graduationYear && u.graduationYear > currentYear).length})
+            Students (
+            {
+              users.filter(
+                (u) => u.graduationYear && u.graduationYear > currentYear
+              ).length
+            }
+            )
           </Button>
           <Button
-            variant={selectedTab === 'alumni' ? 'default' : 'outline'}
-            onClick={() => setSelectedTab('alumni')}
+            variant={selectedTab === "alumni" ? "default" : "outline"}
+            onClick={() => setSelectedTab("alumni")}
           >
-            Alumni Users ({users.filter(u => u.graduationYear && u.graduationYear <= currentYear).length})
+            Alumni (
+            {
+              users.filter(
+                (u) => u.graduationYear && u.graduationYear <= currentYear
+              ).length
+            }
+            )
           </Button>
           <Button
-            variant={selectedTab === 'admin' ? 'default' : 'outline'}
-            onClick={() => setSelectedTab('admin')}
+            variant={selectedTab === "admin" ? "default" : "outline"}
+            onClick={() => setSelectedTab("admin")}
           >
-            Admin ({users.filter(u => u.role === 'admin').length})
+            Admin ({users.filter((u) => u.role === "admin").length})
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {filteredUsers.map((user) => {
-          const graduationYear = user.graduationYear ? Number(user.graduationYear) : null;
-          const isAlumni = graduationYear !== null && graduationYear <= currentYear;
-          
+          const graduationYear = user.graduationYear
+            ? Number(user.graduationYear)
+            : null;
+          const isAlumni =
+            graduationYear !== null && graduationYear <= currentYear;
+
           return (
             <div
               key={user.userId}
               className="bg-card text-card-foreground p-6 rounded-lg border border-border flex flex-col items-center hover:shadow-md transition-shadow"
             >
-              {/* <ProfilePhoto src={user.profilePhoto || "/default-avatar.png"} /> */}
               <ProfilePhoto src={user.profilePhoto} userId={user.userId} />
               <h2 className="mt-4 font-semibold text-lg text-foreground">
                 {user.firstName} {user.lastName}
               </h2>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant={user.role === 'admin' ? "default" : isAlumni ? "default" : "secondary"}>
-                  {user?.role === 'admin' ? 'Admin' : isAlumni ? 'Alumni' : 'Student'}
+                <Badge
+                  variant={
+                    user.role === "admin" ? "default" : isAlumni ? "default" : "secondary"
+                  }
+                >
+                  {user.role === "admin"
+                    ? "Admin"
+                    : isAlumni
+                    ? "Alumni"
+                    : "Student"}
                 </Badge>
                 {graduationYear && (
-                  <Badge variant="outline">
-                    Batch of {graduationYear}
-                  </Badge>
+                  <Badge variant="outline">Batch of {graduationYear}</Badge>
                 )}
               </div>
               {getConnectionButton(user.userId)}
@@ -220,4 +252,4 @@ export default function PeopleList({ currentUser }: { currentUser: any }) {
       </div>
     </div>
   );
-} 
+}
