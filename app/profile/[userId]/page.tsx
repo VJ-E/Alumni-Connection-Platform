@@ -1,12 +1,10 @@
 import { getUserById } from "@/lib/serveractions";
 import ProfileForm from "@/components/ProfileForm";
-import { notFound, redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
-
-// Import the Department type from the user model
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import type { Department } from "@/models/user.model";
 
-// Define the expected user profile type
 type UserProfile = {
   userId: string;
   firstName: string;
@@ -15,34 +13,37 @@ type UserProfile = {
   profilePhoto: string;
   description: string;
   graduationYear: number | null;
-  department: Department | ''; // Can be a Department value or empty string
-  major: string; // Added missing major field
-  role: 'student' | 'alumni' | 'admin';
+  department: Department | "";
+  major: string;
+  role: "student" | "alumni" | "admin";
   linkedInUrl?: string;
   githubUrl?: string;
 };
 
-export default async function UserProfilePage({ params }: { params: { userId: string } }) {
+export default async function UserProfilePage({
+  params,
+}: {
+  params: { userId: string };
+}) {
   const { userId } = params;
-  if (!userId) {
-    redirect("/");
-  }
+  if (!userId) redirect("/");
 
   try {
-    const [profile, user] = await Promise.all([
+    const [profile, session] = await Promise.all([
       getUserById(userId) as Promise<UserProfile | null>,
-      currentUser()
+      getServerSession(authOptions),
     ]);
 
     if (!profile) {
       return (
         <div className="pt-20 min-h-screen bg-background flex items-center justify-center">
-          <div className="text-destructive text-lg font-medium">User not found</div>
+          <div className="text-destructive text-lg font-medium">
+            User not found
+          </div>
         </div>
       );
     }
 
-    // Ensure required fields have default values
     const safeProfile: UserProfile = {
       userId: profile.userId || userId,
       firstName: profile.firstName || "",
@@ -51,16 +52,18 @@ export default async function UserProfilePage({ params }: { params: { userId: st
       profilePhoto: profile.profilePhoto || "/default-avatar.png",
       description: profile.description || "",
       graduationYear: profile.graduationYear || null,
-      department: profile.department || '', // Default to empty string if not provided
-      major: profile.major || '', // Added major field
-      role: (profile.role as 'student' | 'alumni' | 'admin') || 'student', // Ensure role is one of the allowed values
+      department: profile.department || "",
+      major: profile.major || "",
+      role: (profile.role as "student" | "alumni" | "admin") || "student",
       ...(profile.linkedInUrl && { linkedInUrl: profile.linkedInUrl }),
-      ...(profile.githubUrl && { githubUrl: profile.githubUrl })
+      ...(profile.githubUrl && { githubUrl: profile.githubUrl }),
     };
 
-    // If the current user is viewing their own profile, allow editing
-    const isCurrentUser = user && user.id === profile.userId;
-    const currentUserProfile = user?.id ? await getUserById(user.id) : null;
+    const isCurrentUser = session?.user?.id === profile.userId;
+    const currentUserProfile = session?.user?.id
+      ? await getUserById(session.user.id)
+      : null;
+
     return (
       <div className="pt-20 min-h-screen bg-background">
         <div className="max-w-6xl mx-auto px-4">
@@ -69,9 +72,11 @@ export default async function UserProfilePage({ params }: { params: { userId: st
               <h1 className="text-2xl font-bold mb-8 text-foreground">
                 {safeProfile.firstName} {safeProfile.lastName}&apos;s Profile
               </h1>
-              <ProfileForm 
-                initialData={safeProfile} 
-                readOnly={!isCurrentUser && currentUserProfile?.role !== "admin"} 
+              <ProfileForm
+                initialData={safeProfile}
+                readOnly={
+                  !isCurrentUser && currentUserProfile?.role !== "admin"
+                }
               />
             </div>
           </div>
@@ -79,7 +84,7 @@ export default async function UserProfilePage({ params }: { params: { userId: st
       </div>
     );
   } catch (error) {
-    console.error('Error loading profile:', error);
+    console.error("Error loading profile:", error);
     return (
       <div className="pt-20 min-h-screen bg-background flex items-center justify-center">
         <div className="text-destructive text-lg font-medium">
@@ -88,4 +93,4 @@ export default async function UserProfilePage({ params }: { params: { userId: st
       </div>
     );
   }
-} 
+}

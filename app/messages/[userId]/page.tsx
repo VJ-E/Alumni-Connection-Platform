@@ -1,10 +1,10 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getUserById } from "@/lib/serveractions";
 import ChatWindow from "@/components/ChatWindow";
 import { redirect } from "next/navigation";
 import type { Department } from "@/models/user.model";
 
-// Define the expected user type for chat
 interface ChatUser {
   userId: string;
   firstName: string;
@@ -13,56 +13,62 @@ interface ChatUser {
   profilePhoto: string;
   description: string;
   graduationYear: number | null;
-  department: Department | '';
-  major: string; // Added missing major field
-  role: 'student' | 'alumni' | 'admin';
+  department: Department | "";
+  major: string;
+  role: "student" | "alumni" | "admin";
   linkedInUrl?: string;
   githubUrl?: string;
 }
 
-export default async function ChatPage({ params }: { params: { userId: string } }) {
+export default async function ChatPage({
+  params,
+}: {
+  params: { userId: string };
+}) {
   try {
-    const user = await currentUser();
-    if (!user) {
-      redirect("/sign-in");
-      return null; // This line is needed to make TypeScript happy
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      redirect("/login");
     }
 
     const [otherUser, currentUserData] = await Promise.all([
       getUserById(params.userId) as Promise<ChatUser | null>,
-      getUserById(user.id) as Promise<ChatUser | null>
+      getUserById(session.user.id) as Promise<ChatUser | null>,
     ]);
 
     if (!otherUser) {
-      // Show a more user-friendly error message
       return (
         <div className="pt-20 min-h-screen bg-background flex items-center justify-center">
           <div className="text-destructive text-lg font-medium">
-            The user you&apos;re trying to message doesn&apos;t exist or has been deleted.
+            The user you&apos;re trying to message doesn&apos;t exist or has
+            been deleted.
           </div>
         </div>
       );
     }
 
     if (!currentUserData) {
-      redirect("/sign-in");
-      return null; // This line is needed to make TypeScript happy
+      redirect("/login");
     }
 
-    // Ensure both users have the required properties
     const safeCurrentUser: ChatUser = {
-      userId: currentUserData.userId || user.id,
+      userId: currentUserData.userId || session.user.id,
       firstName: currentUserData.firstName || "",
       lastName: currentUserData.lastName || "",
       email: currentUserData.email || "",
       profilePhoto: currentUserData.profilePhoto || "/default-avatar.png",
       description: currentUserData.description || "",
       graduationYear: currentUserData.graduationYear || null,
-      department: currentUserData.department || '',
-      major: currentUserData.major || '', // Added major field
-      role: (currentUserData.role as 'student' | 'alumni' | 'admin') || 'student',
-      ...(currentUserData.linkedInUrl && { linkedInUrl: currentUserData.linkedInUrl }),
-      ...(currentUserData.githubUrl && { githubUrl: currentUserData.githubUrl })
+      department: currentUserData.department || "",
+      major: currentUserData.major || "",
+      role:
+        (currentUserData.role as "student" | "alumni" | "admin") || "student",
+      ...(currentUserData.linkedInUrl && {
+        linkedInUrl: currentUserData.linkedInUrl,
+      }),
+      ...(currentUserData.githubUrl && {
+        githubUrl: currentUserData.githubUrl,
+      }),
     };
 
     const safeOtherUser: ChatUser = {
@@ -73,24 +79,27 @@ export default async function ChatPage({ params }: { params: { userId: string } 
       profilePhoto: otherUser.profilePhoto || "/default-avatar.png",
       description: otherUser.description || "",
       graduationYear: otherUser.graduationYear || null,
-      department: otherUser.department || '',
-      major: otherUser.major || '', // Added major field
-      role: (otherUser.role as 'student' | 'alumni' | 'admin') || 'student',
+      department: otherUser.department || "",
+      major: otherUser.major || "",
+      role: (otherUser.role as "student" | "alumni" | "admin") || "student",
       ...(otherUser.linkedInUrl && { linkedInUrl: otherUser.linkedInUrl }),
-      ...(otherUser.githubUrl && { githubUrl: otherUser.githubUrl })
+      ...(otherUser.githubUrl && { githubUrl: otherUser.githubUrl }),
     };
 
     return (
       <div className="pt-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm h-[calc(100vh-8rem)]">
-            <ChatWindow currentUser={safeCurrentUser} otherUser={safeOtherUser} />
+            <ChatWindow
+              currentUser={safeCurrentUser}
+              otherUser={safeOtherUser}
+            />
           </div>
         </div>
       </div>
     );
   } catch (error) {
-    console.error('Error in ChatPage:', error);
+    console.error("Error in ChatPage:", error);
     return (
       <div className="pt-20 min-h-screen bg-background flex items-center justify-center">
         <div className="text-destructive text-lg font-medium">
@@ -99,4 +108,4 @@ export default async function ChatPage({ params }: { params: { userId: string } 
       </div>
     );
   }
-} 
+}

@@ -1,17 +1,18 @@
 "use client";
 
-import { usePathname } from 'next/navigation';
-import Navbar from './Navbar';
+import { usePathname } from "next/navigation";
+import Navbar from "./Navbar";
 
 const NavbarWrapper = () => {
-    const pathname = usePathname();
-    const isAuthPage = pathname?.startsWith('/sign-in') || pathname?.startsWith('/sign-up');
+  const pathname = usePathname();
+  const isAuthPage =
+    pathname?.startsWith("/login") || pathname?.startsWith("/register");
 
-    if (isAuthPage) {
-        return null;
-    }
+  if (isAuthPage) {
+    return null;
+  }
 
-    return <Navbar />;
+  return <Navbar />;
 };
 
-export default NavbarWrapper; 
+export default NavbarWrapper;

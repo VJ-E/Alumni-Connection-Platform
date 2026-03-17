@@ -1,10 +1,11 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
-  const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/login");
   }
-  redirect(`/profile/${user.id}`);
-} 
+  redirect(`/profile/${session.user.id}`);
+}
