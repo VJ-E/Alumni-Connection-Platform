@@ -1,51 +1,52 @@
-import { authMiddleware } from "@clerk/nextjs/server";
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-export default authMiddleware({
-  publicRoutes: [
-    "/",
-    "/sign-in(.*)",
-    "/sign-up(.*)",
-    "/api/webhook(.*)",
-    "/api/uploadthing",
-    "/api/users/check-onboarding", // Allow onboarding check without auth
-    "/api/users/user_(.*)", // Allow user profile access without auth for public profiles
-  ],
-  ignoredRoutes: [
-    "/api/webhook(.*)",
-    "/_next/static/(.*)",
-    "/favicon.ico",
-    "/manifest.json",
-    "/sw.js",
-    "/offline.html",
-    "/banner.jpg",
-    "/kit_logo.png",
-    "/default-avatar.png",
-    "/default-group.png",
-    "/login-banner.jpg",
-    "/login-banner2.jpg",
-    "/LinkedIn_icon.svg.png",
-    "/LinkedIn_logo.png",
-  ],
-  // Add afterAuth to handle authentication flow better
-  afterAuth(auth, req) {
-    // Handle authentication flow
-    if (!auth.userId && !auth.isPublicRoute) {
-      // Redirect to sign-in for protected routes
-      return;
-    }
-    
-    // Allow the request to proceed
-    return;
+export default withAuth(
+  function middleware(req) {
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized({ req, token }) {
+        const { pathname } = req.nextUrl;
+
+        // Always allow auth routes
+        if (
+          pathname.startsWith("/login") ||
+          pathname.startsWith("/register") ||
+          pathname.startsWith("/api/auth")
+        ) {
+          return true;
+        }
+
+        // Allow public static files
+        if (
+          pathname.startsWith("/_next") ||
+          pathname.startsWith("/api/auth") ||
+          pathname === "/manifest.json" ||
+          pathname === "/sw.js" ||
+          pathname === "/offline.html" ||
+          pathname === "/favicon.ico" ||
+          pathname.endsWith(".png") ||
+          pathname.endsWith(".jpg") ||
+          pathname.endsWith(".svg") ||
+          pathname.endsWith(".xml")
+        ) {
+          return true;
+        }
+
+        // For everything else, require a valid token
+        return !!token;
+      },
+    },
+    pages: {
+      signIn: "/login",
+    },
   }
-});
+);
 
-// Stop Middleware running on static files and public folder
 export const config = {
   matcher: [
-    '/((?!.+\\.[\\w]+$|_next).*)', 
-    '/', 
-    '/(api|trpc)(.*)'
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

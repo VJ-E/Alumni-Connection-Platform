@@ -15,6 +15,7 @@ export interface IUser {
   role: 'student' | 'alumni' | 'admin';
   linkedInUrl?: string;
   githubUrl?: string;
+  password?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -78,7 +79,19 @@ const userSchema = new mongoose.Schema<IUser>({
     type: String,
     default: "",
   },
-}, { timestamps: true });
+  password: {
+    type: String,
+    default: "",
+  },
+}, { 
+  timestamps: true,
+  toJSON: {
+    transform: function(doc, ret) {
+      delete ret.password;
+      return ret;
+    }
+  }
+});
 
 // Function to determine role based on graduation year
 function determineRole(graduationYear: number | null): 'student' | 'alumni' | 'admin' {
