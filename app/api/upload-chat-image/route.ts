@@ -1,48 +1,42 @@
-import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { v2 as cloudinary } from "cloudinary";
 
-// Configure Cloudinary with environment variables
-cloudinary.config({ 
+cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
 });
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { image } = await request.json();
-    
-    if (!image) {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { imageData } = await req.json();
+
+    if (!imageData) {
       return NextResponse.json(
-        { message: 'No image provided' },
+        { error: "No image data provided" },
         { status: 400 }
       );
     }
 
-    // Upload to Cloudinary using the preset
-    const result = await cloudinary.uploader.upload(image, {
-      upload_preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-      folder: 'chat-uploads',
-      resource_type: 'auto'
+    const uploadResponse = await cloudinary.uploader.upload(imageData, {
+      folder: "chat-images",
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      imageUrl: result.secure_url 
-    });
-
+    return NextResponse.json({ url: uploadResponse.secure_url });
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error("Error uploading chat image:", error);
     return NextResponse.json(
-      { 
-        success: false,
-        message: 'Error uploading image',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: "Failed to upload image" },
       { status: 500 }
     );
   }
 }
-
-export const dynamic = 'force-dynamic';

@@ -1,28 +1,40 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import { Post } from "@/models/post.model";
-import { NextRequest, NextResponse } from "next/server";
 
-// get likes
-export const GET = async (req:NextRequest, {params}:{params:{postId:string}}) => {
-    try {
-        await connectDB();
-        const post = await Post.findById({_id:params.postId});
-        if(!post) return NextResponse.json({error:'Post not found.'});
-        return NextResponse.json(post.likes);
-    } catch (error:any) {
-        return NextResponse.json({error:'An error occurred.'});
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { postId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-}
-// post likes
-export const POST = async (req:NextRequest, {params}:{params:{postId:string}}) => {
-    try {
-        await connectDB();
-        const userId = await req.json();
-        const post = await Post.findById({_id:params.postId});
-        if(!post) return NextResponse.json({error:'Post not found.'});
-        await post.updateOne({$addToSet:{likes:userId}});
-        return NextResponse.json({message:"Post liked successfully."});
-    } catch (error:any) {
-        return NextResponse.json({error:'An error occurred.'});
+
+    await connectDB();
+    const postId = params.postId;
+
+    const result = await Post.findOneAndUpdate(
+      { _id: postId },
+      { $addToSet: { likes: userId } },
+      { new: true }
+    );
+
+    if (!result) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
+
+    return NextResponse.json({ success: true, post: result });
+  } catch (error) {
+    console.error("Error in POST /api/posts/[postId]/like:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
