@@ -174,6 +174,7 @@ export const getAllPosts = async (): Promise<SafePost[]> => {
               graduationYear: userProfile.graduationYear,
               linkedInUrl: userProfile.linkedInUrl || "",
               role: userProfile.role || "student",
+              major: userProfile.major || "",
             };
           }
           return post;
@@ -349,6 +350,30 @@ export const getConnectionStatus = async (otherUserId: string) => {
   } catch (error) {
     console.error("Error checking connection status:", error);
     return null;
+  }
+};
+
+export const getCurrentUserConnectionStatuses = async () => {
+  try {
+    await connectDB();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return {};
+    const userId = session.user.id;
+
+    const connections = await Connection.find({
+      $or: [{ senderId: userId }, { receiverId: userId }],
+    });
+
+    const statusMap: Record<string, string> = {};
+    connections.forEach((conn) => {
+      const otherId = conn.senderId === userId ? conn.receiverId : conn.senderId;
+      statusMap[otherId] = conn.status;
+    });
+
+    return statusMap;
+  } catch (error) {
+    console.error("Error fetching connection statuses bulk:", error);
+    return {};
   }
 };
 

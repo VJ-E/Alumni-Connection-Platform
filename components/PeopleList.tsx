@@ -8,6 +8,7 @@ import {
   getAllUsers,
   sendConnectionRequest,
   getConnectionStatus,
+  getCurrentUserConnectionStatuses,
 } from "@/lib/serveractions";
 import { IUser, Department } from "@/models/user.model";
 import Link from "next/link";
@@ -50,14 +51,8 @@ export default function PeopleList({
 
         setUsers(otherUsers as IUser[]);
 
-        const statuses: Record<string, string> = {};
-        await Promise.all(
-          otherUsers.map(async (user) => {
-            const status = await getConnectionStatus(user.userId);
-            if (status) statuses[user.userId] = status;
-          })
-        );
-        setConnectionStatuses(statuses);
+        const bulkStatuses = await getCurrentUserConnectionStatuses();
+        setConnectionStatuses(bulkStatuses);
       } catch (error) {
         console.error("Error fetching users:", error);
         toast.error("Failed to load users");
